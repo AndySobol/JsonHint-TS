@@ -1,44 +1,72 @@
 # JsonHint-TS
 
-🎨 VSCode Extension for working with Tokens Studio JSON tokens
+VSCode Extension for working with [Tokens Studio](https://tokens.studio) JSON tokens directly in VSCode.
+
+---
 
 ## ✨ Features
-- Show resolved values and full resolution chain of tokens
-- Supports **typography**, **composition**, **boxShadow**, **color** and other complex types
-- Displays token inheritance in hover tooltips
-- Auto-completion for `$value` fields
-- Color preview right in autocomplete and hover
-- Cycle detection with warning ⚠️
-- Fully compatible with [Tokens Studio for Figma](https://tokens.studio)
+
+- 🎨 Shows resolved values in hover tooltips
+- 🟣 Displays full inheritance and resolution chain
+- 🔤 Supports complex types: **typography**, **composition**, **boxShadow**, **color**, **sizing**, **spacing**, **dimension** and others
+- 🪄 Auto-completion for `$value` fields
+- 🟡 Color preview inside hover and autocomplete
+- 🔄 Handles cycles and long chains safely
+- 🐇 Optimized for large token collections (5000+ tokens)
+- 💼 Full compatibility with Tokens Studio for Figma
 
 ---
 
 ## 📸 Screenshots
 
-### Hover with inheritance chain
+### 🟣 Typography Details
+Shows fully resolved typography properties:
+![show-typography](./screenshots/show-typography.png)
 
-> Shows full resolution path and result
+### 🎨 Color Tooltip
+Instant color preview:
+![hint-color](./screenshots/hint-color.png)
 
-![Hover Screenshot](./screenshots/hover.png)
+### 📏 Sizing Tooltip
+Works with sizing tokens:
+![hint-size](./screenshots/hint-size.png)
 
-### Autocomplete
+### ✨ Typography Autocomplete
+Smart autocomplete with resolved tokens:
+![hint-typography](./screenshots/hint-typography.png)
 
-> Get instant suggestions with color previews
+### ☁️ Box Shadow Source
+See how complex boxShadow compositions resolve:
+![show-box-shadow-source](./screenshots/show-box-shadow-source.png)
 
-![Completion Screenshot](./screenshots/completion.png)
+### ☁️ Box Shadow Result
+Full visualization of box shadow chain:
+![show-box-shadow](./screenshots/show-box-shadow.png)
+
+### 🎨 Color Resolution
+Resolve color composition with full trace:
+![show-color](./screenshots/show-color.png)
+
+### 📐 Dimension Tooltip
+See all dimensions calculated:
+![show-size](./screenshots/show-size.png)
+
+### ➕ Sizing Chain
+Full resolution chain for sizing:
+![show-sizing](./screenshots/show-sizing.png)
 
 ---
 
-## ⚙️ Configuration
+## ⚙️ Extension Settings
 
 | Setting            | Description                        | Default                                    |
 | ------------------ | ---------------------------------- | ------------------------------------------ |
-| `inheritanceStyle` | Display style of inheritance chain | `compact`                                  |
+| `inheritanceStyle` | Style of inheritance chain display | `compact`                                  |
 | `showIcons`        | Show icons in hover                | `true`                                     |
-| `showArrows`       | Show arrows in inheritance         | `true`                                     |
-| `complexTypes`     | Types displayed as tables          | `["typography","boxShadow","composition"]` |
-| `noisyTokens`      | Tokens to exclude from chains      | `["core.ly.tab.base", ...]`                |
-| `maxChainLength`   | Max resolution depth               | `5`                                        |
+| `showArrows`       | Show arrows between tokens         | `true`                                     |
+| `complexTypes`     | Types rendered as tables           | `["typography","boxShadow","composition"]` |
+| `noisyTokens`      | Tokens to exclude from chain       | `["core.ly.tab.base",...]`                 |
+| `maxChainLength`   | Maximum resolution depth           | `5`                                        |
 | `maxSuggestions`   | Max autocomplete suggestions       | `300`                                      |
 
 ---
@@ -46,12 +74,15 @@
 ## 💾 Installation
 
 ### From Marketplace (Recommended)
-(When published)
-
 ```bash
 code --install-extension your-publisher.jsonhint-ts
 
 
-💖 Credits
+❤️ Credits
 
-Powered by Tokens Studio community.
+Thanks to the Tokens Studio team and community.
+
+
+Manual Installation
+vsce package
+code --install-extension jsonhint-ts-0.5.6-pre.vsix
