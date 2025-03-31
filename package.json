@@ -20,7 +20,8 @@
 	],
 	"icon": "icon.png",
 	"activationEvents": [
-		"onLanguage:json"
+		"onLanguage:json",
+		"onLanguage:jsonc"
 	],
 	"main": "./extension.js",
 	"contributes": {

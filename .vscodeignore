@@ -1,0 +1,9 @@
+node_modules/
+.git/
+.vscode/
+*.log
+*.vsix
+LICENSE
+README.md
+CHANGELOG.md
+screenshots/
