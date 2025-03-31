@@ -50,3 +50,8 @@
 
 ```bash
 code --install-extension your-publisher.jsonhint-ts
+
+
+💖 Credits
+
+Powered by Tokens Studio community.
