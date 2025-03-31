@@ -3,7 +3,7 @@
 	"displayName": "JsonHint-TS",
 	"publisher": "JsonHintTS",
 	"description": "Extension to display resolved token values from JSON with full resolution chain, compatible with Tokens Studio logic.",
-	"version": "0.5.6-pre",
+	"version": "0.6.1",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/AndySobol/JsonHint-TS"
@@ -11,7 +11,7 @@
 	"bugs": {
 		"url": "https://github.com/AndySobol/JsonHint-TS/issues"
 	},
-	"homepage": "https://github.com/AndySobol/JsonHint-TS",
+	"homepage": "https://github.com/AndySobol/JsonHint-TS/blob/main/README.md",
 	"engines": {
 		"vscode": "^1.50.0"
 	},
