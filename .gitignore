@@ -1,0 +1,31 @@
+# Node
+node_modules/
+
+# VSCode settings (если они только локальные и не часть проекта)
+.vscode/
+
+# VSCode Extension Package
+*.vsix
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# System files
+.DS_Store
+Thumbs.db
+
+# OS junk
+*.swp
+*.swo
+
+# Optional: если будешь делать coverage или linter reports
+coverage/
+dist/
+out/
+
+# Temporary
+temp/
+tmp/

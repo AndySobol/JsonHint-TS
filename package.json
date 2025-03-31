@@ -1,0 +1,75 @@
+{
+	"name": "jsonhint-ts",
+	"displayName": "JsonHint-TS",
+	"description": "Extension to display resolved token values from JSON with full resolution chain, compatible with Tokens Studio logic.",
+	"version": "0.5.6-pre",
+	"engines": {
+		"vscode": "^1.50.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"icon": "icon.png",
+	"activationEvents": [
+		"onLanguage:json"
+	],
+	"main": "./extension.js",
+	"contributes": {
+		"configuration": {
+			"title": "JsonHint-TS",
+			"properties": {
+				"jsonTokensHint.inheritanceStyle": {
+					"type": "string",
+					"enum": [
+						"compact",
+						"table"
+					],
+					"default": "compact",
+					"description": "How to display inheritance chain."
+				},
+				"jsonTokensHint.showIcons": {
+					"type": "boolean",
+					"default": true,
+					"description": "Show icons for token types in hover."
+				},
+				"jsonTokensHint.showArrows": {
+					"type": "boolean",
+					"default": true,
+					"description": "Show arrows between tokens in inheritance chain."
+				},
+				"jsonTokensHint.complexTypes": {
+					"type": "array",
+					"default": [
+						"typography",
+						"boxShadow",
+						"composition"
+					],
+					"description": "List of token types treated as complex (rendered as tables)."
+				},
+				"jsonTokensHint.noisyTokens": {
+					"type": "array",
+					"default": [
+						"core.ly.tab.base",
+						"cfg.scale.base.tab",
+						"cfg.scale.mult.tab"
+					],
+					"description": "List of tokens to exclude from the inheritance chain (noisy tokens)."
+				},
+				"jsonTokensHint.maxChainLength": {
+					"type": "number",
+					"default": 5,
+					"description": "Maximum chain depth displayed in hover tooltips."
+				},
+				"jsonTokensHint.maxSuggestions": {
+					"type": "number",
+					"default": 300,
+					"description": "Limit number of completion suggestions to avoid UI lag."
+				}
+			}
+		}
+	},
+	"dependencies": {
+		"jsonc-parser": "^3.3.1",
+		"mathjs": "^12.4.3"
+	}
+}
