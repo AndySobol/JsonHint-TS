@@ -68,6 +68,7 @@ Full resolution chain for sizing:
 | `noisyTokens`      | Tokens to exclude from chain       | `["core.ly.tab.base",...]`                 |
 | `maxChainLength`   | Maximum resolution depth           | `5`                                        |
 | `maxSuggestions`   | Max autocomplete suggestions       | `300`                                      |
+| `allowNoDollar`    | Enables W3C DTCG ($type) support   | `true`                                      |
 
 ---
 
