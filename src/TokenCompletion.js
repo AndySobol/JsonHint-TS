@@ -45,6 +45,7 @@ class TokenCompletion {
 
 			let content = "";
 
+			// Если цветовой токен, добавляем превью
 			if (resolved.type === "color" && resolved.finalValue && resolved.finalValue.startsWith("#")) {
 				content += utils.getColorPreview(resolved.finalValue) + "\n\n";
 			}

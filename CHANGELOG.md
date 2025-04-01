@@ -1,12 +1,17 @@
 # Change Log
 
-## [0.7.0] - 2025-04-01
 
-### Added
-- Added a VS Code status bar indicator that displays the extension’s status and token count.
+## [0.8.1] - 2025-04-02
 
-### Fixed
-- Fixed token link navigation: clicking a token now correctly opens the corresponding file and highlights the token.
+### Improved Color Modifiers Handling:
+- Added support for alpha modifiers – now alpha values defined as decimal numbers (e.g., 0.04) are converted to percentages and correctly applied to the base color.
+- Updated TokenParser to preserve the extensions field from the original JSON token definitions, ensuring that modifiers are properly passed during token resolution.
+
+### Code Optimization and Improvements:
+- Refactored and optimized functions for rendering previews (hover, chain, tables) to improve readability and maintainability.
+- Enhanced the usage of template literals and added additional logging to facilitate debugging and trace the computation steps (e.g., base color, alpha value, and final modified color).
+- Added inline comments and improved code structure for better debugging and future maintenance.
+
 
 ## [0.5.6-pre] - 2025-03-31
 

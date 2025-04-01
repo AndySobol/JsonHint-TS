@@ -13,7 +13,6 @@ class TokenLoader {
 	async load() {
 		this.mapping = {};
 		this.ready = false;
-
 		try {
 			await this._walk(this.tokensDir);
 			this.ready = true;
@@ -32,10 +31,8 @@ class TokenLoader {
 			console.error(`[JsonHint-TS] Failed to read directory: ${dir}`, e);
 			return;
 		}
-
 		for (const entry of entries) {
 			const filePath = path.join(dir, entry.name);
-
 			if (entry.isDirectory()) {
 				await this._walk(filePath);
 			} else if (entry.isFile() && filePath.endsWith(".json")) {

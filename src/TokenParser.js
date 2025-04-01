@@ -12,7 +12,6 @@ function flattenTokens(obj, prefix, file, mapping, inheritedType = null, allowNo
 		if (key === "$type" || (allowNoDollar && key === "type")) continue;
 		const value = obj[key];
 		const newKey = prefix ? `${prefix}.${key}` : key;
-
 		if (typeof value === "object" && value !== null && !("$value" in value || (allowNoDollar && "value" in value))) {
 			const currentInherited = value.$type || (allowNoDollar && value.type) || inheritedType;
 			flattenTokens(value, newKey, file, mapping, currentInherited, allowNoDollar);
@@ -21,6 +20,7 @@ function flattenTokens(obj, prefix, file, mapping, inheritedType = null, allowNo
 				value: value.$value || (allowNoDollar ? value.value : undefined),
 				type: value.$type || (allowNoDollar ? value.type : undefined) || inheritedType || "text",
 				file,
+				extensions: value.$extensions || (allowNoDollar ? value.extensions : undefined),
 			};
 		}
 	}
@@ -74,10 +74,8 @@ class TokenResolver {
 	calculate(tokenKey) {
 		const def = this.mapping[tokenKey];
 		if (!def) return `{${tokenKey}}`;
-
 		const expr = this.resolveAll(def.value).trim();
 		const numericTypes = ["sizing", "fontSizes", "spacing", "borderRadius", "borderWidth", "dimension", "number"];
-
 		if (numericTypes.includes(def.type)) {
 			if (/^-?\d+(\.\d+)?(px|em|rem|%)?$/.test(expr)) return expr;
 			try {
@@ -88,7 +86,6 @@ class TokenResolver {
 				return expr;
 			}
 		}
-
 		return expr;
 	}
 
@@ -112,19 +109,15 @@ class TokenResolver {
 	getResolutionChain(tokenKey, visited = new Set()) {
 		if (this.chainCache.has(tokenKey)) return this.chainCache.get(tokenKey);
 		if (visited.has(tokenKey)) return "⚠️ Cycle";
-
 		visited.add(tokenKey);
 		const def = this.mapping[tokenKey];
 		if (!def) return null;
-
 		const fileUri = `file://${path.join(this.tokensDir, def.file)}`;
 		const tokenLink = `[${tokenKey}](${fileUri})`;
-
 		if (!/{([^}]+)}/.test(def.value)) {
 			this.chainCache.set(tokenKey, tokenLink);
 			return tokenLink;
 		}
-
 		const innerChain = def.value.replace(/{([^}]+)}/g, (_, innerKey) => this.getResolutionChain(innerKey, visited) || `{${innerKey}}`);
 		const result = `${tokenLink} → ${innerChain}`;
 		this.chainCache.set(tokenKey, result);
@@ -132,11 +125,11 @@ class TokenResolver {
 	}
 
 	resolveToken(tokenRef) {
-		if (this.resolveCache.has(tokenRef)) return this.resolveCache.get(tokenRef);
-
-		let tokenKey = tokenRef.replace(/[{}]/g, "");
+		// Let's save the original key and definition so as not to lose the extensions.
+		let originalTokenKey = tokenRef.replace(/[{}]/g, "");
+		let originalDef = this.mapping[originalTokenKey];
+		let tokenKey = originalTokenKey;
 		const visited = new Set();
-
 		while (true) {
 			const def = this.mapping[tokenKey];
 			if (!def || typeof def.value !== "string" || !def.value.startsWith("{")) break;
@@ -144,16 +137,14 @@ class TokenResolver {
 			visited.add(tokenKey);
 			tokenKey = def.value.replace(/[{}]/g, "");
 		}
-
 		const def = this.mapping[tokenKey];
-		if (!def) {
-			const result = { finalValue: tokenRef, type: "unknown" };
-			this.resolveCache.set(tokenRef, result);
-			return result;
-		}
-
-		const { type, value } = def;
 		let resolved;
+		if (!def) {
+			resolved = { finalValue: tokenRef, type: "unknown" };
+			this.resolveCache.set(tokenRef, resolved);
+			return resolved;
+		}
+		const { type, value } = def;
 		if (type === "composition" && typeof value === "object") {
 			const props = {};
 			for (const [prop, propVal] of Object.entries(value)) {
@@ -199,7 +190,12 @@ class TokenResolver {
 		} else {
 			resolved = { finalValue: this.calculate(tokenKey), chain: this.getResolutionChain(tokenKey), type };
 		}
-
+		// We pass extensions from the original definition or from the current one.
+		if (originalDef && originalDef.extensions) {
+			resolved.extensions = originalDef.extensions;
+		} else if (def && def.extensions) {
+			resolved.extensions = def.extensions;
+		}
 		this.resolveCache.set(tokenRef, resolved);
 		return resolved;
 	}

@@ -6,10 +6,9 @@ const TokenResolver = require("./src/TokenParser");
 const TokenHoverProvider = require("./src/TokenHoverProvider");
 const TokenCompletion = require("./src/TokenCompletion");
 
-let tokenResolver; 
+let tokenResolver;
 let reloadTimer;
-let extensionConfig = {}; 
-
+let extensionConfig = {};
 let statusBarItem;
 
 async function activate(context) {
@@ -35,22 +34,21 @@ async function activate(context) {
 
 	const selector = { language: "json", scheme: "file" };
 
-	// --- Hover ---
+	// Hover Provider
 	context.subscriptions.push(vscode.languages.registerHoverProvider(selector, new TokenHoverProvider(tokenResolver, extensionConfig)));
 
-	// --- Completion ---
+	// Completion Provider
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(selector, new TokenCompletion(tokenResolver, extensionConfig), "{"));
 
-	// --- File Watcher ---
+	// File Watcher
 	const tokensPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "tokens");
 	const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(tokensPath, "**/*.json"));
-
 	watcher.onDidChange(() => debounceReload());
 	watcher.onDidCreate(() => debounceReload());
 	watcher.onDidDelete(() => debounceReload());
 	context.subscriptions.push(watcher);
 
-	// --- Config Watcher ---
+	// Config Watcher
 	context.subscriptions.push(
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration("jsonTokensHint")) {
@@ -59,7 +57,7 @@ async function activate(context) {
 		})
 	);
 
-	// --- Reveal token ---
+	// Reveal token command
 	context.subscriptions.push(
 		vscode.commands.registerCommand("jsonTokensHint.revealToken", async ({ file, token }) => {
 			try {
@@ -70,22 +68,18 @@ async function activate(context) {
 					vscode.window.showWarningMessage("Failed to parse JSON");
 					return;
 				}
-
 				function findTokenNode(node, tokenParts) {
 					if (!node) return null;
 					if (node.type === "object" && Array.isArray(node.children)) {
 						for (const prop of node.children) {
 							if (prop.type === "property" && prop.children && prop.children[0].value === tokenParts[0]) {
-								if (tokenParts.length === 1) {
-									return prop;
-								}
+								if (tokenParts.length === 1) return prop;
 								return findTokenNode(prop.children[1], tokenParts.slice(1));
 							}
 						}
 					}
 					return null;
 				}
-
 				const tokenParts = token.split(".");
 				const tokenNode = findTokenNode(root, tokenParts);
 				if (tokenNode) {
@@ -109,13 +103,11 @@ async function activate(context) {
 	);
 }
 
-// --- Debounced Reload ---
 function debounceReload() {
 	clearTimeout(reloadTimer);
 	reloadTimer = setTimeout(() => reloadTokens(), 300);
 }
 
-// --- Reload tokens with progress ---
 async function reloadTokens() {
 	statusBarItem.text = "JsonHint-TS: Reloading tokens...";
 	await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: "JsonHint-TS: Reloading tokens..." }, async () => {
