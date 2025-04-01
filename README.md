@@ -20,7 +20,11 @@ VSCode Extension for working with [Tokens Studio](https://tokens.studio) JSON to
 
 ---
 
-## 📸 Screenshots
+## 📸 Preview
+
+### Token Navigation
+When hovering over a token, clickable links are shown. Clicking on a token automatically opens the corresponding file and highlights the exact line where that token is defined. This feature is implemented with a concise function that leverages VS Code's API for opening documents, revealing ranges, and applying temporary highlights—streamlining your workflow and making token management more intuitive.
+![show-typography](./screenshots/navigation.gif)
 
 ### 🟣 Typography Details
 Shows fully resolved typography properties:
@@ -50,6 +54,14 @@ Full visualization of box shadow chain:
 Resolve color composition with full trace:
 ![show-color](./screenshots/show-color.png)
 
+### 🎨 Gradient Resolution
+Resolve gradient composition with full trace:
+![show-sizing](./screenshots/hint-gradient.png)
+
+### 🎨 Color Modifiers Resolution
+Resolve alpha, mix composition with full trace:
+![show-sizing](./screenshots/hint-alpha-color.png)
+
 ### 📐 Dimension Tooltip
 See all dimensions calculated:
 ![show-size](./screenshots/show-size.png)
@@ -57,6 +69,7 @@ See all dimensions calculated:
 ### ➕ Sizing Chain
 Full resolution chain for sizing:
 ![show-sizing](./screenshots/show-sizing.png)
+
 
 ---
 
