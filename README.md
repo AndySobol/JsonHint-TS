@@ -68,21 +68,11 @@ Full resolution chain for sizing:
 | `noisyTokens`      | Tokens to exclude from chain       | `["core.ly.tab.base",...]`                 |
 | `maxChainLength`   | Maximum resolution depth           | `5`                                        |
 | `maxSuggestions`   | Max autocomplete suggestions       | `300`                                      |
+| `allowNoDollar`    | Enables W3C DTCG ($type) support   | `true`                                      |
 
 ---
 
-## 💾 Installation
-
-### From Marketplace (Recommended)
-```bash
-code --install-extension your-publisher.jsonhint-ts
-
 
 ❤️ Credits
-
 Thanks to the Tokens Studio team and community.
-
-
-Manual Installation
-vsce package
-code --install-extension jsonhint-ts-0.5.6-pre.vsix
+And also huge thanks to Gleb Rotachev ❤️.

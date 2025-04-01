@@ -27,7 +27,6 @@ class TokenCompletion {
 		const detectedType = utils.findNearestType(node);
 		const items = [];
 
-		// Определяем диапазон для замены введённого префикса (без фигурной скобки)
 		const tokenStart = new vscode.Position(position.line, index + 1);
 		const tokenRange = new vscode.Range(tokenStart, position);
 

@@ -1,3 +1,5 @@
+"use strict";
+
 const path = require("path");
 const fs = require("fs").promises;
 const { create, all } = require("mathjs");
@@ -6,29 +8,27 @@ const { validTypes } = require("./constants");
 const math = create(all);
 math.import({ px: 1, em: 1, rem: 1, "%": 1, deg: 1, s: 1 }, { override: true });
 
-// --- Token flattener ---
-
-function flattenTokens(obj, prefix, file, mapping, inheritedType = null) {
+function flattenTokens(obj, prefix, file, mapping, inheritedType = null, allowNoDollar = true) {
 	for (const key in obj) {
-		if (!Object.hasOwn(obj, key) || key === "$type") continue;
+		if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+		if (key === "$type" || (allowNoDollar && key === "type")) continue;
 		const value = obj[key];
 		const newKey = prefix ? `${prefix}.${key}` : key;
 
-		if (typeof value === "object" && !("$value" in value)) {
-			const currentInherited = value.$type || inheritedType;
-			flattenTokens(value, newKey, file, mapping, currentInherited);
-		} else if (typeof value === "object" && "$value" in value) {
+		if (typeof value === "object" && value !== null && !("$value" in value || (allowNoDollar && "value" in value))) {
+			const currentInherited = value.$type || (allowNoDollar && value.type) || inheritedType;
+			flattenTokens(value, newKey, file, mapping, currentInherited, allowNoDollar);
+		} else if (typeof value === "object" && value !== null && ("$value" in value || (allowNoDollar && "value" in value))) {
 			mapping[newKey] = {
-				value: value.$value,
-				type: value.$type || inheritedType || "text",
+				value: value.$value || (allowNoDollar ? value.value : undefined),
+				type: value.$type || (allowNoDollar ? value.type : undefined) || inheritedType || "text",
 				file,
 			};
 		}
 	}
 }
 
-// --- Token Resolver ---
-
+// --- Token Resolver
 class TokenResolver {
 	constructor(tokensDir, config) {
 		this.tokensDir = tokensDir;
@@ -68,13 +68,11 @@ class TokenResolver {
 			const contentStr = await fs.readFile(filePath, "utf-8");
 			const json = JSON.parse(contentStr);
 			const relPath = path.relative(this.tokensDir, filePath);
-			flattenTokens(json, "", relPath, this.mapping);
+			flattenTokens(json, "", relPath, this.mapping, null, this.config.allowNoDollar !== false);
 		} catch (e) {
 			console.error(`[JsonHint-TS] Error parsing file ${filePath}:`, e);
 		}
 	}
-
-	// --- Resolution ---
 
 	calculate(tokenKey) {
 		const def = this.mapping[tokenKey];
@@ -158,9 +156,7 @@ class TokenResolver {
 		}
 
 		const { type, value } = def;
-
 		let resolved;
-
 		if (type === "composition" && typeof value === "object") {
 			const props = {};
 			for (const [prop, propVal] of Object.entries(value)) {
@@ -214,14 +210,10 @@ class TokenResolver {
 	getResolutionPath(tokenKey, visited = new Set()) {
 		if (visited.has(tokenKey)) return [];
 		visited.add(tokenKey);
-
 		const def = this.mapping[tokenKey];
 		if (!def) return [];
-
 		const step = { token: tokenKey, file: def.file, type: def.type || "unknown" };
-
 		if (!/{([^}]+)}/.test(def.value)) return [step];
-
 		return [step, ...Array.from(def.value.matchAll(/{([^}]+)}/g)).flatMap(([, innerKey]) => this.getResolutionPath(innerKey, visited))];
 	}
 }

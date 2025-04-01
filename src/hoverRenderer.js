@@ -2,7 +2,6 @@ const vscode = require("vscode");
 const path = require("path");
 const { icons } = require("./constants");
 
-// Общая функция для рендеринга таблиц
 function renderTableLike(rows, columns) {
 	return rows.map((row) => columns.map((col) => `**${col}**: ${row[col] || "-"}`).join("   |   ")).join("\n\n") + "\n";
 }
