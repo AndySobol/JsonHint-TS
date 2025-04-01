@@ -3,8 +3,9 @@ const path = require("path");
 const { flattenTokens } = require("./TokenParser");
 
 class TokenLoader {
-	constructor(tokensDir) {
+	constructor(tokensDir, config = {}) {
 		this.tokensDir = tokensDir;
+		this.config = config;
 		this.mapping = {};
 		this.ready = false;
 	}
@@ -49,7 +50,7 @@ class TokenLoader {
 			const contentStr = await fs.readFile(filePath, "utf-8");
 			const json = JSON.parse(contentStr);
 			const relPath = path.relative(this.tokensDir, filePath);
-			flattenTokens(json, "", relPath, this.mapping);
+			flattenTokens(json, "", relPath, this.mapping, null, this.config.allowNoDollar !== false);
 		} catch (e) {
 			console.error(`[JsonHint-TS] Error parsing file ${filePath}`, e);
 		}

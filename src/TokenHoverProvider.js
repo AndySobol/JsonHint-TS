@@ -22,7 +22,7 @@ class TokenHoverProvider {
 
 		let content = "";
 
-		// --- Result ---
+		// --- Result
 		content += `## Result\n\n`;
 
 		if (resolved.props) {
@@ -42,7 +42,7 @@ class TokenHoverProvider {
 			content += `- ${resolved.finalValue}\n`;
 		}
 
-		// --- Source ---
+		// --- Source
 		content += `\n## Source\n\n`;
 
 		if (resolved.props) {

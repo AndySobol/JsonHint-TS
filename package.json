@@ -3,7 +3,7 @@
 	"displayName": "JsonHint-TS",
 	"publisher": "andySobolev",
 	"description": "Extension to display resolved token values from JSON with full resolution chain, compatible with Tokens Studio logic.",
-	"version": "0.6.6",
+	"version": "0.6.7",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/AndySobol/JsonHint-TS"
@@ -78,6 +78,11 @@
 					"type": "number",
 					"default": 300,
 					"description": "Limit number of completion suggestions to avoid UI lag."
+				},
+				"jsonTokensHint.allowNoDollar": {
+					"type": "boolean",
+					"default": true,
+					"description": "If true, the extension will recognize tokens defined without a leading '$'."
 				}
 			}
 		}
