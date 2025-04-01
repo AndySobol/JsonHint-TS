@@ -37,12 +37,10 @@ function renderBoxShadowGroup(propName, props) {
 				Value: `${subData.value}`,
 				Resolved: subData.result,
 			}));
-
 			const sourceRows = Object.entries(shadowProps).map(([subProp, subData]) => ({
 				Property: subProp,
 				Chain: subData.chain || "-",
 			}));
-
 			return `---\n\n**${propName} — Shadow #${groupId}**\n\n${renderTableLike(resultRows, ["Property", "Value", "Resolved"])}**Source:**\n\n${renderTableLike(sourceRows, ["Property", "Chain"])}`;
 		})
 		.join("\n");
