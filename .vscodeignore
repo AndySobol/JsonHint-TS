@@ -3,7 +3,5 @@ node_modules/
 .vscode/
 *.log
 *.vsix
-LICENSE
-README.md
 CHANGELOG.md
 screenshots/
