@@ -39,8 +39,6 @@ function applyColorModifiers(color, modifiers) {
 	return modifiedColor;
 }
 
-// --- Token utils ---
-
 function isComplexType(type, config) {
 	return config.complexTypes.includes(type);
 }
@@ -59,8 +57,6 @@ function findNearestType(node) {
 function isRelevantToken(tokenString, config) {
 	return !config.noisyTokens.some((noisy) => tokenString.includes(noisy));
 }
-
-// --- Chain Renderer ---
 
 function renderChain(chain, mapping, config) {
 	if (!chain) return "";
@@ -89,8 +85,6 @@ function renderChain(chain, mapping, config) {
 
 	return result;
 }
-
-// --- Color Preview ---
 
 function getColorPreview(colorValue) {
 	if (!isColor(colorValue)) return "";

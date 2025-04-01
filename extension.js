@@ -6,9 +6,11 @@ const TokenResolver = require("./src/TokenParser");
 const TokenHoverProvider = require("./src/TokenHoverProvider");
 const TokenCompletion = require("./src/TokenCompletion");
 
-let tokenResolver; // singleton
+let tokenResolver; 
 let reloadTimer;
-let extensionConfig = {}; // shared config
+let extensionConfig = {}; 
+
+let statusBarItem;
 
 async function activate(context) {
 	if (!vscode.workspace.workspaceFolders?.length) {
@@ -18,10 +20,17 @@ async function activate(context) {
 
 	extensionConfig = vscode.workspace.getConfiguration("jsonTokensHint");
 
+	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	statusBarItem.text = "JsonHint-TS: Initializing...";
+	statusBarItem.tooltip = "JsonHint-TS is active";
+	statusBarItem.show();
+	context.subscriptions.push(statusBarItem);
+
 	if (!tokenResolver) {
 		const tokensDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "tokens");
 		tokenResolver = new TokenResolver(tokensDir, extensionConfig);
 		await tokenResolver.loadTokens();
+		statusBarItem.text = `$(zap) JsonHint-TS: Loaded ${Object.keys(tokenResolver.mapping).length} tokens`;
 	}
 
 	const selector = { language: "json", scheme: "file" };
@@ -53,27 +62,32 @@ async function activate(context) {
 	// --- Reveal token ---
 	context.subscriptions.push(
 		vscode.commands.registerCommand("jsonTokensHint.revealToken", async ({ file, token }) => {
-			const vscodeVersion = parseFloat(vscode.version.split(".")[0] + "." + vscode.version.split(".")[1]);
-			if (process.platform === "darwin" && vscodeVersion >= 1.98) {
-				vscode.window.showWarningMessage("Перемещение к токену временно отключено из-за бага VSCode (Mac + Electron 34).");
-				return;
-			}
-
 			try {
 				const doc = await vscode.workspace.openTextDocument(file);
 				const editor = await vscode.window.showTextDocument(doc);
 				const root = jsonc.parseTree(doc.getText());
 				if (!root) {
-					vscode.window.showWarningMessage("Не удалось разобрать JSON");
+					vscode.window.showWarningMessage("Failed to parse JSON");
 					return;
 				}
 
-				function findNode(node) {
-					if (node.type === "property" && node.children?.[0]?.value === token) return node;
-					return node.children?.map(findNode).find(Boolean) || null;
+				function findTokenNode(node, tokenParts) {
+					if (!node) return null;
+					if (node.type === "object" && Array.isArray(node.children)) {
+						for (const prop of node.children) {
+							if (prop.type === "property" && prop.children && prop.children[0].value === tokenParts[0]) {
+								if (tokenParts.length === 1) {
+									return prop;
+								}
+								return findTokenNode(prop.children[1], tokenParts.slice(1));
+							}
+						}
+					}
+					return null;
 				}
 
-				const tokenNode = findNode(root);
+				const tokenParts = token.split(".");
+				const tokenNode = findTokenNode(root, tokenParts);
 				if (tokenNode) {
 					const keyNode = tokenNode.children[0];
 					const range = new vscode.Range(doc.positionAt(keyNode.offset), doc.positionAt(keyNode.offset + keyNode.length));
@@ -86,10 +100,10 @@ async function activate(context) {
 					editor.setDecorations(decorationType, [range]);
 					setTimeout(() => decorationType.dispose(), 1500);
 				} else {
-					vscode.window.showWarningMessage(`Переменная "${token}" не найдена в JSON`);
+					vscode.window.showWarningMessage(`Variable "${token}" not found in JSON`);
 				}
 			} catch (e) {
-				vscode.window.showErrorMessage(`Ошибка при перемещении к токену: ${e.message}`);
+				vscode.window.showErrorMessage(`Error moving to token: ${e.message}`);
 			}
 		})
 	);
@@ -103,8 +117,13 @@ function debounceReload() {
 
 // --- Reload tokens with progress ---
 async function reloadTokens() {
-	await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: "JsonHint-TS: Reloading tokens..." }, async () => await tokenResolver.loadTokens());
-	vscode.window.setStatusBarMessage(`JsonHint-TS: Reloaded ${Object.keys(tokenResolver.mapping).length} tokens`, 2000);
+	statusBarItem.text = "JsonHint-TS: Reloading tokens...";
+	await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: "JsonHint-TS: Reloading tokens..." }, async () => {
+		await tokenResolver.loadTokens();
+	});
+	const tokenCount = Object.keys(tokenResolver.mapping).length;
+	vscode.window.setStatusBarMessage(`JsonHint-TS: Reloaded ${tokenCount} tokens`, 2000);
+	statusBarItem.text = `$(zap) JsonHint-TS: Loaded ${tokenCount} tokens`;
 }
 
 module.exports = { activate };
