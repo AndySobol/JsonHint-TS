@@ -1,5 +1,3 @@
-"use strict";
-
 const path = require("path");
 const fs = require("fs").promises;
 const { create, all } = require("mathjs");
@@ -28,7 +26,6 @@ function flattenTokens(obj, prefix, file, mapping, inheritedType = null, allowNo
 	}
 }
 
-// --- Token Resolver
 class TokenResolver {
 	constructor(tokensDir, config) {
 		this.tokensDir = tokensDir;
@@ -107,7 +104,7 @@ class TokenResolver {
 			iterations++;
 		}
 		if (iterations === 20) {
-			str += " ⚠️ (Циклическая зависимость обнаружена)";
+			str += " ⚠️ (Cyclic dependency detected)";
 		}
 		return str;
 	}

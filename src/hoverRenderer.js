@@ -63,8 +63,9 @@ function renderSimpleChainTable(chain, icons, config) {
 			.map((step) => {
 				const icon = config.showIcons ? icons[step.type] || "" : "";
 				const workspaceFolder = vscode.workspace.workspaceFolders[0];
-				const absPath = vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, "tokens", step.file)).toString();
-				const tokenLink = `[${step.token}](${absPath})`;
+				const absPath = path.join(workspaceFolder.uri.fsPath, "tokens", step.file);
+				const args = encodeURIComponent(JSON.stringify({ file: absPath, token: step.token }));
+				const tokenLink = `[${step.token}](command:jsonTokensHint.revealToken?${args})`;
 				const relativeFile = step.file.split("/").slice(-2).join("/");
 				return `${icon} ${tokenLink} — ${relativeFile}`;
 			})

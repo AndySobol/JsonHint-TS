@@ -1,62 +1,66 @@
 # Change Log
 
+## [0.7.0] - 2025-04-01
+
+### Added
+- Added a VS Code status bar indicator that displays the extension’s status and token count.
+
+### Fixed
+- Fixed token link navigation: clicking a token now correctly opens the corresponding file and highlights the token.
+
 ## [0.5.6-pre] - 2025-03-31
 
 ### 🟣 Added
-- Полностью асинхронная загрузка токенов (больше не блокирует VSCode)
-- Кэширование конфигурации и токенов
-- Поддержка всех типов токенов Tokens Studio (color, typography, boxShadow, sizing и др.)
-- Отображение color preview в hover и autocomplete
-- Новая обработка inheritance chain
-- Поддержка complex types в hover (composition, typography, boxShadow)
-- Автоматическое устранение циклических зависимостей в цепочках
-- Поддержка `$extensions` (experimental)
+- Fully asynchronous token loading (no longer blocks VS Code)
+- Caching for configuration and tokens
+- Support for all Tokens Studio token types (color, typography, boxShadow, sizing, etc.)
+- Display of color preview in hover and autocomplete
+- New handling of inheritance chains
+- Support for complex types in hover (composition, typography, boxShadow)
+- Automatic resolution of cyclic dependencies in chains
+- Support for `$extensions` (experimental)
 
 ### 🟡 Improved
-- Оптимизация для больших проектов (>5000 токенов)
-- Улучшена производительность autocomplete
-- Hover теперь отображается быстрее и плавнее
-- Улучшена читаемость tooltip (Result и Source теперь аккуратно разделены)
-- Сглаживание и упрощение inheritance chains
+- Optimized for large projects (>5000 tokens)
+- Improved autocomplete performance
+- Faster and smoother hover display
+- Enhanced tooltip readability (Result and Source are now neatly separated)
+- Inheritance chains are smoothed and simplified
 
 ### 🔴 Fixed
-- Исправлена ошибка при вычислении token resolution path
-- Hover для boxShadow в composition теперь корректно отображается
-- Устранены возможные ошибки при запуске в VSCode >=1.98 (Electron 34+)
-- Улучшена поддержка vscode.workspaceFolders в edge-cases
+- Fixed error in computing token resolution paths
+- Hover for boxShadow in composition now displays correctly
+- Fixed potential issues running in VS Code >= 1.98 (Electron 34+)
+- Improved handling of vscode.workspaceFolders in edge cases
 
 ---
-
-
 
 ## [0.5.5] - 2025-03-25
 
 ### Initial release
-- Базовая версия с hover и autocomplete для простых типов
-- Работа с Tokens Studio JSON
-- Поддержка цветовых превью для `$type: color`
+- Basic version with hover and autocomplete for simple types
+- Works with Tokens Studio JSON
+- Supports color previews for `$type: color`
 
 ---
 
 ## [0.5.4] - 2025-03-31
 
 ### Added
-- Иконка расширения в стиле Tokens Studio
-- Полноценный `README.md` для публикации
-- Поддержка VSCode >= 1.98 и Electron 34
-- Поддержка тем VSCode (light / dark)
-- Поддержка новых unit-выражений (`px`, `em`, `rem`, `%`, `s`, `deg`, и др.)
+- Tokens Studio style extension icon
+- Complete `README.md` for publication
+- Support for VS Code >= 1.98 and Electron 34
+- Support for VS Code themes (light/dark)
+- Support for new unit expressions (`px`, `em`, `rem`, `%`, `s`, `deg`, etc.)
 
 ### Fixed
-- Критический баг: `mathjs` больше не падает при выражениях с `px` и подобными
-- Стабильность работы с вложенными токенами
-- Hover больше не ломается на неразрешённых или некорректных цепочках
-- Фильтрация цепочек от технических токенов улучшена
+- Critical bug: `mathjs` no longer crashes on expressions with `px` and similar units
+- Stability improvements for nested tokens
+- Hover no longer breaks on unresolved or incorrect chains
+- Improved filtering of technical tokens from chains
 
 ### Improved
-- Полный рефакторинг TokenResolver (повышена скорость и читаемость)
-- Упрощена логика `TokenHoverProvider`
-- Hover-подсказки стали быстрее за счёт кэширования и оптимизаций
-- Оптимизированы рендеры для complex types (`composition`, `boxShadow`, `typography`)
-
----
+- Complete refactoring of TokenResolver (improved speed and readability)
+- Simplified logic in `TokenHoverProvider`
+- Faster hover tooltips thanks to caching and optimizations
+- Optimized rendering for complex types (`composition`, `boxShadow`, `typography`)

@@ -1,3 +1,5 @@
+![Extension Icon](./icon.png)
+
 # JsonHint-TS
 
 VSCode Extension for working with [Tokens Studio](https://tokens.studio) JSON tokens directly in VSCode.
@@ -14,6 +16,7 @@ VSCode Extension for working with [Tokens Studio](https://tokens.studio) JSON to
 - 🔄 Handles cycles and long chains safely
 - 🐇 Optimized for large token collections (5000+ tokens)
 - 💼 Full compatibility with Tokens Studio for Figma
+- 🔗 Direct token navigation: Click token links in hover tooltips to open the corresponding file and highlight the token.
 
 ---
 
