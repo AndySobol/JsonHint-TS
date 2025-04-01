@@ -38,7 +38,7 @@ class TokenCompletion {
 
 			const resolved = this.tokenResolver.resolveToken(`{${key}}`);
 			const item = new vscode.CompletionItem(key, vscode.CompletionItemKind.Value);
-			item.insertText = new vscode.SnippetString(`${key}}`);
+			item.insertText = new vscode.SnippetString(`{${key}}`);
 			item.range = tokenRange;
 
 			const md = new vscode.MarkdownString();
@@ -46,14 +46,14 @@ class TokenCompletion {
 
 			let content = "";
 
-			if (resolved.type === "color" && resolved.finalValue?.startsWith("#")) {
+			if (resolved.type === "color" && resolved.finalValue && resolved.finalValue.startsWith("#")) {
 				content += utils.getColorPreview(resolved.finalValue) + "\n\n";
 			}
 
 			content += "### Result\n\n";
 			if (resolved.props) {
 				for (const [prop, data] of Object.entries(resolved.props)) {
-					content += `- **${prop}**: ${data.result} \`${data.value}\`\n`;
+					content += `- **${prop}**: ${data.result} ${data.value}\n`;
 				}
 			} else {
 				content += `- ${resolved.finalValue}\n`;
@@ -62,13 +62,14 @@ class TokenCompletion {
 			content += "\n### Source\n\n";
 			if (resolved.props) {
 				for (const [prop, data] of Object.entries(resolved.props)) {
-					content += `- **${prop}**: ${data.chain}\n`;
+					content += `- **${prop}**: ${data.chain.includes("⚠️") ? "⚠️ " : ""}${data.chain}\n`;
 				}
 			} else {
 				content += utils.renderChain(resolved.chain, this.tokenResolver.mapping, this.config);
 			}
 
 			item.detail = resolved.finalValue || "Token";
+			md.appendMarkdown(content);
 			item.documentation = md;
 			items.push(item);
 		}

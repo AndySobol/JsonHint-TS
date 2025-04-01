@@ -25,6 +25,7 @@ class TokenLoader {
 	async _walk(dir) {
 		let entries;
 		try {
+			console.log(`[JsonHint-TS] Reading directory: ${dir}`);
 			entries = await fs.readdir(dir, { withFileTypes: true });
 		} catch (e) {
 			console.error(`[JsonHint-TS] Failed to read directory: ${dir}`, e);
@@ -44,6 +45,7 @@ class TokenLoader {
 
 	async _parseFile(filePath) {
 		try {
+			console.log(`[JsonHint-TS] Processing file: ${filePath}`);
 			const contentStr = await fs.readFile(filePath, "utf-8");
 			const json = JSON.parse(contentStr);
 			const relPath = path.relative(this.tokensDir, filePath);

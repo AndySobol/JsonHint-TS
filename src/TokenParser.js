@@ -58,18 +58,19 @@ class TokenResolver {
 				}
 			}
 		} catch (e) {
-			console.error(`[JsonHint-TS] Error reading directory ${dir}`, e);
+			console.error(`[JsonHint-TS] Error reading directory ${dir}:`, e);
 		}
 	}
 
 	async _parseFile(filePath) {
 		try {
+			console.log(`[JsonHint-TS] Processing file: ${filePath}`);
 			const contentStr = await fs.readFile(filePath, "utf-8");
 			const json = JSON.parse(contentStr);
 			const relPath = path.relative(this.tokensDir, filePath);
 			flattenTokens(json, "", relPath, this.mapping);
 		} catch (e) {
-			console.error(`[JsonHint-TS] Error parsing file ${filePath}`, e);
+			console.error(`[JsonHint-TS] Error parsing file ${filePath}:`, e);
 		}
 	}
 
@@ -100,7 +101,6 @@ class TokenResolver {
 		let prev = "";
 		let iterations = 0;
 		while (str !== prev && iterations < 20) {
-			// увеличил лимит + фикс на случай циклов
 			prev = str;
 			str = str.replace(/{([^}]+)}/g, (_, tokenKey) => {
 				if (!this.mapping[tokenKey]) return `{${tokenKey}}`;
@@ -108,7 +108,9 @@ class TokenResolver {
 			});
 			iterations++;
 		}
-		if (iterations === 20) str += " ⚠️ (cycle detected)";
+		if (iterations === 20) {
+			str += " ⚠️ (Циклическая зависимость обнаружена)";
+		}
 		return str;
 	}
 

@@ -2,6 +2,7 @@ const vscode = require("vscode");
 const path = require("path");
 const { icons } = require("./constants");
 
+// Общая функция для рендеринга таблиц
 function renderTableLike(rows, columns) {
 	return rows.map((row) => columns.map((col) => `**${col}**: ${row[col] || "-"}`).join("   |   ")).join("\n\n") + "\n";
 }
@@ -11,7 +12,7 @@ function renderComplexTable(propName, props, mode = "result") {
 		mode === "result"
 			? {
 					Property: subProp,
-					Value: `\`${subData.value}\``,
+					Value: `${subData.value}`,
 					Resolved: subData.result,
 			  }
 			: {
@@ -34,7 +35,7 @@ function renderBoxShadowGroup(propName, props) {
 		.map(([groupId, shadowProps]) => {
 			const resultRows = Object.entries(shadowProps).map(([subProp, subData]) => ({
 				Property: subProp,
-				Value: `\`${subData.value}\``,
+				Value: `${subData.value}`,
 				Resolved: subData.result,
 			}));
 
@@ -50,15 +51,20 @@ function renderBoxShadowGroup(propName, props) {
 
 function renderSimpleChainTable(chain, icons, config) {
 	if (!Array.isArray(chain) || chain.length === 0) return "";
-	if (!vscode.workspace.workspaceFolders?.length) return "";
+	if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) return "";
 
 	const seen = new Set();
 	return (
 		chain
-			.filter((step) => !seen.has(step.token) && seen.add(step.token))
+			.filter((step) => {
+				if (seen.has(step.token)) return false;
+				seen.add(step.token);
+				return true;
+			})
 			.map((step) => {
 				const icon = config.showIcons ? icons[step.type] || "" : "";
-				const absPath = vscode.Uri.file(path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "tokens", step.file)).toString();
+				const workspaceFolder = vscode.workspace.workspaceFolders[0];
+				const absPath = vscode.Uri.file(path.join(workspaceFolder.uri.fsPath, "tokens", step.file)).toString();
 				const tokenLink = `[${step.token}](${absPath})`;
 				const relativeFile = step.file.split("/").slice(-2).join("/");
 				return `${icon} ${tokenLink} — ${relativeFile}`;
