@@ -1,5 +1,14 @@
 # Change Log
 
+## [1.0.0] - 2025-04-08
+
+### Rewrite in TypeScript:
+- The extension has been completely rewritten in TypeScript, which improves code readability, enforces strong typing, and simplifies future maintenance.
+- Added Font Preview in Hover: A new feature has been added to display a preview of font size and style directly within hover tooltips, helping users quickly understand token values.
+- A dedicated WebView module has been implemented to show detailed token information, including resolution chain and properties, enhancing the overall analysis and debugging experience.
+- Various bugs and errors have been addressed, resulting in a more stable and reliable extension.
+- The codebase has been optimized for better performance, ensuring faster response times when working with large token sets.
+
 
 ## [0.8.1] - 2025-04-02
 

@@ -6,6 +6,9 @@ import { validTypes } from "./constants";
 const math = create(all, {});
 math.import({ px: 1, em: 1, rem: 1, "%": 1, deg: 1, s: 1 }, { override: true });
 
+/**
+ * Flattens nested token objects into a single mapping.
+ */
 export function flattenTokens(obj: any, prefix: string, file: string, mapping: Record<string, any>, inheritedType: string | null = null, allowNoDollar: boolean = true): void {
 	for (const key in obj) {
 		if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
@@ -46,7 +49,7 @@ export class TokenResolver {
 		this.chainCache.clear();
 		this.resolveCache.clear();
 		await this._walk(this.tokensDir);
-		console.log(`[JsonHint-TS] Loaded ${Object.keys(this.mapping).length} tokens`);
+		console.log(`[jsonhintTs] Loaded ${Object.keys(this.mapping).length} tokens`);
 	}
 
 	private async _walk(dir: string): Promise<void> {
@@ -61,19 +64,19 @@ export class TokenResolver {
 				}
 			}
 		} catch (e) {
-			console.error(`[JsonHint-TS] Error reading directory ${dir}:`, e);
+			console.error(`[jsonhintTs] Error reading directory ${dir}:`, e);
 		}
 	}
 
 	private async _parseFile(filePath: string): Promise<void> {
 		try {
-			console.log(`[JsonHint-TS] Processing file: ${filePath}`);
+			console.log(`[jsonhintTs] Processing file: ${filePath}`);
 			const contentStr = await fs.readFile(filePath, "utf-8");
 			const json = JSON.parse(contentStr);
 			const relPath = path.relative(this.tokensDir, filePath);
 			flattenTokens(json, "", relPath, this.mapping, null, this.config.allowNoDollar !== false);
 		} catch (e) {
-			console.error(`[JsonHint-TS] Error parsing file ${filePath}:`, e);
+			console.error(`[jsonhintTs] Error parsing file ${filePath}:`, e);
 		}
 	}
 
@@ -88,7 +91,7 @@ export class TokenResolver {
 				const result = math.evaluate(expr);
 				return result + (def.unit || (def.type === "number" ? "" : "px"));
 			} catch (e) {
-				console.error(`[JsonHint-TS] Math error in token ${tokenKey}:`, e);
+				console.error(`[jsonhintTs] Math error in token ${tokenKey}:`, e);
 				return expr;
 			}
 		}
@@ -196,7 +199,7 @@ export class TokenResolver {
 					};
 				}
 			});
-			// Добавляем file – путь к файлу, где определён данный boxShadow
+			// Add file – path to the file where this boxShadow is defined
 			resolved = { type, props, file: def.file };
 		} else {
 			resolved = { finalValue: this.calculate(tokenKey), chain: this.getResolutionChain(tokenKey), type };

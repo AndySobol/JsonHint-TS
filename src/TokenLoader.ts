@@ -24,19 +24,19 @@ export class TokenLoader {
 		try {
 			await this._walk(this.tokensDir);
 			this.ready = true;
-			console.log(`[JsonHint-TS] Loaded ${Object.keys(this.mapping).length} tokens.`);
+			console.log(`[jsonhintTs] Loaded ${Object.keys(this.mapping).length} tokens.`);
 		} catch (e) {
-			console.error("[JsonHint-TS] Error loading tokens:", e);
+			console.error("[jsonhintTs] Error loading tokens:", e);
 		}
 	}
 
 	private async _walk(dir: string): Promise<void> {
 		let entries: Dirent[];
 		try {
-			console.log(`[JsonHint-TS] Reading directory: ${dir}`);
+			console.log(`[jsonhintTs] Reading directory: ${dir}`);
 			entries = await fsPromises.readdir(dir, { withFileTypes: true });
 		} catch (e) {
-			console.error(`[JsonHint-TS] Failed to read directory: ${dir}`, e);
+			console.error(`[jsonhintTs] Failed to read directory: ${dir}`, e);
 			return;
 		}
 		for (const entry of entries) {
@@ -51,13 +51,13 @@ export class TokenLoader {
 
 	private async _parseFile(filePath: string): Promise<void> {
 		try {
-			console.log(`[JsonHint-TS] Processing file: ${filePath}`);
+			console.log(`[jsonhintTs] Processing file: ${filePath}`);
 			const contentStr = await fsPromises.readFile(filePath, "utf-8");
 			const json = JSON.parse(contentStr);
 			const relPath = path.relative(this.tokensDir, filePath);
 			flattenTokens(json, "", relPath, this.mapping, null, this.config.allowNoDollar !== false);
 		} catch (e) {
-			console.error(`[JsonHint-TS] Error parsing file ${filePath}`, e);
+			console.error(`[jsonhintTs] Error parsing file ${filePath}`, e);
 		}
 	}
 }

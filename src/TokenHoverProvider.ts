@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { renderChain, getFontPreview } from "./utils"; // getFontPreview – для превью шрифта
+import { renderChain, getFontPreview } from "./utils"; // getFontPreview for font preview
 import * as hr from "./hoverRenderer";
 import { icons as defaultIcons } from "./constants";
 
@@ -15,7 +15,7 @@ export interface ExtensionConfig {
 	[key: string]: any;
 }
 
-// Оборачиваем текст в inline-code для бейджа (используется в Details)
+// Wrap text in inline code for badge display
 function wrapBadge(text: string): string {
 	return `\`${text}\``;
 }
@@ -28,7 +28,7 @@ export class TokenHoverProvider implements vscode.HoverProvider {
 	constructor(tokenResolver: TokenResolver, config: ExtensionConfig) {
 		this.tokenResolver = tokenResolver;
 		this.config = config;
-		// Копируем иконки из constants
+		// Copy icons from constants
 		this.icons = { ...defaultIcons };
 	}
 
@@ -40,36 +40,36 @@ export class TokenHoverProvider implements vscode.HoverProvider {
 		const resolved = this.tokenResolver.resolveToken(tokenRef);
 		if (!resolved) return null;
 
-		// Создаем MarkdownString с разрешением HTML (isTrusted = true)
+		// Create a MarkdownString with trusted HTML
 		const md = new vscode.MarkdownString("", true);
 		md.isTrusted = true;
 
 		let content = "";
-		// Если токен типа boxShadow – выводим две секции отдельно
+		// For boxShadow tokens, render two separate sections
 		if (resolved.type === "boxShadow" && resolved.props) {
-			// Секция Result с заголовком: "## <иконка> Result"
+			// Result section with title "## <icon> Result"
 			content += "## " + this.icons["boxShadow"] + " Result\n\n";
 			content += "Details:\n\n";
 			content += hr.renderBoxShadowGroup("Box Shadow", resolved.props, resolved.file, "result");
-			// Разделитель между блоками Result и Source (Markdown горизонтальная линия)
+			// Divider between Result and Source blocks (using Markdown divider)
 			content += "\n\n---\n\n";
 			content += "## Source\n\n";
 			content += hr.renderBoxShadowGroup("Box Shadow", resolved.props, resolved.file, "source");
 		} else {
-			// Для остальных токенов: если включены иконки – выводим их в заголовке
+			// For other tokens, render standard display with icon in header if enabled
 			if (this.config.showIcons !== false && resolved.type && this.icons[resolved.type]) {
 				content += "## " + this.icons[resolved.type] + " Result\n\n";
 			} else {
 				content += "## Result\n\n";
 			}
 
-			// Цветовые токены: показываем превью цвета
+			// For color tokens, show color preview
 			if (resolved.type === "color" && resolved.finalValue && resolved.finalValue.startsWith("#")) {
 				const { getColorPreview } = require("./utils");
 				content += `${getColorPreview(resolved.finalValue)}\n\n`;
 			}
 
-			// Типографические токены: генерируем превью шрифта
+			// For typography tokens, generate a font preview
 			if (resolved.type === "typography" && resolved.props) {
 				const fontFamily = resolved.props.fontFamily ? resolved.props.fontFamily.result || resolved.props.fontFamily.value : "inherit";
 				const fontWeight = resolved.props.fontWeight ? resolved.props.fontWeight.result || resolved.props.fontWeight.value : "normal";
@@ -82,12 +82,12 @@ export class TokenHoverProvider implements vscode.HoverProvider {
 				content += `${preview}\n\n`;
 			}
 
-			// Остальные токены – выводим итоговое значение
+			// For other tokens, display the final value
 			if (resolved.finalValue !== undefined && resolved.type !== "typography" && resolved.type !== "color") {
 				content += `- ${resolved.finalValue}\n\n`;
 			}
 
-			// Раздел Details – вывод для каждого свойства
+			// Details section for each property
 			if (resolved.props) {
 				content += "**Details:**\n\n";
 				for (const [prop, data] of Object.entries(resolved.props)) {
@@ -103,7 +103,7 @@ export class TokenHoverProvider implements vscode.HoverProvider {
 				}
 			}
 
-			// Разделитель между блоком Result и блоком Source
+			// Divider between Result and Source
 			content += "\n\n---\n\n";
 			content += "## Source\n\n";
 			if (resolved.props) {

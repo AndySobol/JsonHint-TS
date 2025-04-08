@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as jsonc from "jsonc-parser";
 import { icons, validTypes } from "./constants";
-import * as fs from "fs"; // используется для Buffer
+import * as fs from "fs"; // used for Buffer
 
 let colorjs: any;
 try {
@@ -21,7 +21,7 @@ export function adjustColor(hex: string, action: "lighten" | "darken", percent: 
 	if (colorjs) {
 		try {
 			const col = new colorjs.Color(hex);
-			// При необходимости можно реализовать корректировку цвета через colorjs
+			// Optionally implement color adjustment using colorjs here
 		} catch (e) {
 			console.error("colorjs error:", e);
 		}
@@ -168,7 +168,7 @@ export function hexToLCH(hex: string): string {
 	return hex;
 }
 
-// --- Token utils ---
+// --- Token utilities ---
 
 export function isComplexType(type: string, config: any): boolean {
 	return config.complexTypes.includes(type);
@@ -205,7 +205,7 @@ export function renderChain(chain: string, mapping: Record<string, any>, config:
 		if (!match) continue;
 		const [, tokenName] = match;
 		const args = encodeURIComponent(JSON.stringify([{ tokenKey: tokenName }]));
-		result += `[${tokenName}](command:jsonTokensHint.viewTokenTooltip?${args})\n`;
+		result += `[${tokenName}](command:jsonhintTs.viewTokenTooltip?${args})\n`;
 	}
 	return result;
 }

@@ -58,7 +58,7 @@ export class TokenCompletion implements vscode.CompletionItemProvider {
 		const index = line.lastIndexOf("{", position.character);
 		if (index === -1) return;
 
-		// Текст после открытой фигурной скобки, который уже набран
+		// Text already typed after the opening brace
 		const prefix = line.substring(index + 1, position.character);
 		const rootNode = jsonc.parseTree(document.getText());
 		if (!rootNode) return;
@@ -69,7 +69,7 @@ export class TokenCompletion implements vscode.CompletionItemProvider {
 		const detectedType = findNearestType(node);
 		const items: vscode.CompletionItem[] = [];
 
-		// Текущий диапазон для замены (без открывающей скобки)
+		// Define current range to replace (without the opening brace)
 		const tokenStart = new vscode.Position(position.line, index + 1);
 		const tokenRange = new vscode.Range(tokenStart, position);
 
@@ -80,7 +80,7 @@ export class TokenCompletion implements vscode.CompletionItemProvider {
 
 			const resolved = this.tokenResolver.resolveToken(`{${key}}`);
 			const item = new vscode.CompletionItem(key, vscode.CompletionItemKind.Value);
-			// Если уже набрана открывающая фигурная скобка – вставляем только token и закрывающую скобку
+			// Insert only token and closing brace (opening brace already exists)
 			item.insertText = new vscode.SnippetString(`${key}}`);
 			item.range = tokenRange;
 
@@ -88,14 +88,14 @@ export class TokenCompletion implements vscode.CompletionItemProvider {
 			md.isTrusted = true;
 
 			let content = "";
-			// Заголовок для блока Result с иконкой (если включены)
+			// Title for the Result block with icon if enabled
 			if (this.config.showIcons !== false && resolved.type && defaultIcons[resolved.type]) {
 				content += "### " + defaultIcons[resolved.type] + " Result\n\n";
 			} else {
 				content += "### Result\n\n";
 			}
 
-			// Превью для цветовых токенов
+			// Preview for color tokens
 			if (resolved.type === "color" && resolved.finalValue && resolved.finalValue.startsWith("#")) {
 				content += getColorPreview(resolved.finalValue) + "\n\n";
 			}
@@ -110,7 +110,7 @@ export class TokenCompletion implements vscode.CompletionItemProvider {
 				content += `- ${resolved.finalValue}\n`;
 			}
 
-			// Разделитель между блоками Result и Source (используем Markdown горизонтальную линию)
+			// Divider between Result and Source blocks
 			content += "\n\n---\n\n";
 			content += "### Source\n\n";
 			if (resolved.props) {

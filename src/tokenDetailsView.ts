@@ -109,7 +109,7 @@ export class TokenDetailsView {
       </html>`;
 	}
 
-	public dispose() {
+	public dispose(): void {
 		TokenDetailsView.currentPanel = undefined;
 		this._panel.dispose();
 		while (this._disposables.length) {
