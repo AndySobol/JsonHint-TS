@@ -1,35 +1,32 @@
-"use strict";
-
 const path = require("path");
 
-/** @type {import('webpack').Configuration} */
-const config = {
-	mode: "production", // или "development"
-	target: "node", // расширения для VSCode работают в Node.js
-	entry: "./extension.js", // точка входа вашего расширения
+module.exports = {
+	mode: "production",
+	target: "node",
+	entry: "./src/extension.ts",
 	output: {
 		path: path.resolve(__dirname, "dist"),
 		filename: "extension.js",
-		libraryTarget: "commonjs2", // требуемый формат для VSCode
+		libraryTarget: "commonjs2",
 	},
 	externals: {
-		// VSCode предоставляет этот модуль, поэтому его не нужно бандлить
 		vscode: "commonjs vscode",
 	},
 	resolve: {
-		extensions: [".js"],
+		extensions: [".ts", ".js"],
 	},
-	devtool: "source-map", // для поддержки sourcemaps
 	module: {
 		rules: [
 			{
-				test: /\.js$/,
-				enforce: "pre",
-				use: ["source-map-loader"],
+				test: /\.ts$/,
 				exclude: /node_modules/,
+				use: [
+					{
+						loader: "ts-loader",
+					},
+				],
 			},
 		],
 	},
+	devtool: "source-map",
 };
-
-module.exports = config;

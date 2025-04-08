@@ -28,7 +28,7 @@ When hovering over a token, clickable links are shown. Clicking on a token autom
 
 ### 🟣 Typography Details
 Shows fully resolved typography properties:
-![show-typography](./screenshots/show-typography.png)
+![show-typography](./screenshots/show-typography2.png)
 
 ### 🎨 Color Tooltip
 Instant color preview:

@@ -1,23 +1,25 @@
 {
 	"name": "jsonhint-ts",
-	"displayName": "JsonHint-TS",
+	"displayName": "jsonhint-ts",
 	"publisher": "andySobolev",
 	"license": "Proprietary",
 	"description": "Extension to display resolved token values from JSON with full resolution chain, compatible with Tokens Studio logic.",
-	"version": "0.8.1",
+	"version": "1.0.1",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/AndySobol/JsonHint-TS"
+		"url": "https://github.com/AndySobolev/JsonHint-TS"
 	},
 	"bugs": {
-		"url": "https://github.com/AndySobol/JsonHint-TS/issues"
+		"url": "https://github.com/AndySobolev/JsonHint-TS/issues"
 	},
-	"homepage": "https://github.com/AndySobol/JsonHint-TS/blob/main/README.md",
+	"homepage": "https://github.com/AndySobolev/JsonHint-TS/blob/main/README.md",
 	"scripts": {
-		"build": "webpack"
+		"build": "webpack",
+		"compile": "tsc -p .",
+		"build-all": "npm install && npm run build && vsce package"
 	},
 	"engines": {
-		"vscode": "^1.80.0"
+		"vscode": "^1.99.0"
 	},
 	"categories": [
 		"Visualization"
@@ -31,9 +33,29 @@
 	"main": "./dist/extension.js",
 	"contributes": {
 		"configuration": {
-			"title": "JsonHint-TS",
+			"title": "jsonhint-ts",
 			"properties": {
-				"jsonTokensHint.inheritanceStyle": {
+				"jsonhintTs.tooltipBackgroundColor": {
+					"type": "string",
+					"default": "#1e1e1e",
+					"description": "Background color for token tooltip view."
+				},
+				"jsonhintTs.tooltipTextColor": {
+					"type": "string",
+					"default": "#d4d4d4",
+					"description": "Text color for token tooltip view."
+				},
+				"jsonhintTs.tooltipFontSize": {
+					"type": "string",
+					"default": "14px",
+					"description": "Font size for token tooltip view."
+				},
+				"jsonhintTs.tooltipAnimationDuration": {
+					"type": "string",
+					"default": "0.3s",
+					"description": "Animation duration (fade-in) for token tooltip view."
+				},
+				"jsonhintTs.inheritanceStyle": {
 					"type": "string",
 					"enum": [
 						"compact",
@@ -42,17 +64,17 @@
 					"default": "compact",
 					"description": "How to display inheritance chain."
 				},
-				"jsonTokensHint.showIcons": {
+				"jsonhintTs.showIcons": {
 					"type": "boolean",
 					"default": true,
 					"description": "Show icons for token types in hover."
 				},
-				"jsonTokensHint.showArrows": {
+				"jsonhintTs.showArrows": {
 					"type": "boolean",
 					"default": true,
 					"description": "Show arrows between tokens in inheritance chain."
 				},
-				"jsonTokensHint.complexTypes": {
+				"jsonhintTs.complexTypes": {
 					"type": "array",
 					"default": [
 						"typography",
@@ -61,7 +83,7 @@
 					],
 					"description": "List of token types treated as complex (rendered as tables)."
 				},
-				"jsonTokensHint.noisyTokens": {
+				"jsonhintTs.noisyTokens": {
 					"type": "array",
 					"default": [
 						"core.ly.tab.base",
@@ -70,31 +92,60 @@
 					],
 					"description": "List of tokens to exclude from the inheritance chain (noisy tokens)."
 				},
-				"jsonTokensHint.maxChainLength": {
+				"jsonhintTs.maxChainLength": {
 					"type": "number",
 					"default": 5,
 					"description": "Maximum chain depth displayed in hover tooltips."
 				},
-				"jsonTokensHint.maxSuggestions": {
+				"jsonhintTs.maxSuggestions": {
 					"type": "number",
 					"default": 300,
 					"description": "Limit number of completion suggestions to avoid UI lag."
 				},
-				"jsonTokensHint.allowNoDollar": {
+				"jsonhintTs.allowNoDollar": {
 					"type": "boolean",
 					"default": true,
 					"description": "If true, the extension will recognize tokens defined without a leading '$'."
 				}
 			}
-		}
+		},
+		"commands": [
+			{
+				"command": "jsonhintTs.goToTokenDefinition",
+				"title": "Go to Token Definition"
+			},
+			{
+				"command": "jsonhintTs.viewTokenTooltip",
+				"title": "View Token Tooltip"
+			},
+			{
+				"command": "jsonhintTs.revealToken",
+				"title": "Reveal Token in File"
+			}
+		],
+		"languages": [
+			{
+				"id": "json",
+				"extensions": [
+					".json"
+				],
+				"aliases": [
+					"JSON"
+				]
+			}
+		]
 	},
 	"dependencies": {
+		"colorjs.io": "*",
 		"jsonc-parser": "^3.3.1",
-		"mathjs": "^12.4.3",
-		"colorjs.io": "*"
+		"mathjs": "^12.4.3"
 	},
 	"devDependencies": {
+		"@types/node": "^22.14.0",
+		"@types/vscode": "^1.99.1",
 		"source-map-loader": "^5.0.0",
+		"ts-loader": "^9.5.2",
+		"typescript": "^4.9.5",
 		"webpack": "^5.98.0",
 		"webpack-cli": "^6.0.1"
 	}
