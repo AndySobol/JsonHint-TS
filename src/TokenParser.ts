@@ -9,7 +9,7 @@ math.import({ px: 1, em: 1, rem: 1, "%": 1, deg: 1, s: 1 }, { override: true });
 export function flattenTokens(obj: any, prefix: string, file: string, mapping: Record<string, any>, inheritedType: string | null = null, allowNoDollar: boolean = true): void {
 	for (const key in obj) {
 		if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
-		// Пропускаем служебные поля
+		// Skip service fields
 		if (key === "$type" || (allowNoDollar && key === "type")) continue;
 
 		const value = obj[key];
@@ -18,7 +18,7 @@ export function flattenTokens(obj: any, prefix: string, file: string, mapping: R
 		if (typeof value === "object" && value !== null) {
 			const nextInheritedType = value.$type || (allowNoDollar && value.type) || inheritedType;
 
-			// Листовой токен, если есть $value
+			// Leaf token if $value exists
 			if ("$value" in value || (allowNoDollar && "value" in value)) {
 				mapping[newKey] = {
 					value: value.$value || (allowNoDollar ? value.value : undefined),
@@ -27,7 +27,7 @@ export function flattenTokens(obj: any, prefix: string, file: string, mapping: R
 					extensions: value.$extensions || (allowNoDollar ? value.extensions : undefined),
 				};
 			}
-			// Рекурсия
+			// Recursion
 			flattenTokens(value, newKey, file, mapping, nextInheritedType, allowNoDollar);
 		}
 	}
@@ -136,25 +136,25 @@ export class TokenResolver {
 		const fileUri = `file://${path.join(this.tokensDir, normalizedFile)}`;
 		const tokenLink = `[${tokenKey}](${fileUri})`;
 
-		// Если в значении токена нет фигурных ссылок – это конечная точка
+		// If there are no curly references in the token value, it is an endpoint
 		if (!/{([^}]+)}/.test(def.value)) {
 			this.chainCache.set(tokenKey, tokenLink);
 			return tokenLink;
 		}
 
-		// <-- Changed: приводим к RegExpMatchArray[]:
+		// <-- Changed: we lead to RegExpMatchArray[]:
 		const matches = Array.from(def.value.matchAll(/{([^}]+)}/g)) as RegExpMatchArray[];
 
-		// Собираем цепочки для каждого вхождения
+		// Collect chains for each occurrence
 		const innerChains = matches.map((m) => {
-			// теперь m имеет тип RegExpMatchArray
+			// now m is of type RegExpMatchArray
 			const innerKey = m[1];
-			// Для каждого innerKey вызываем getResolutionChain рекурсивно
+			// For each innerKey call getResolutionChain recursively
 			const chainOrFallback = this.getResolutionChain(innerKey, visited) || `{${innerKey}}`;
 			return chainOrFallback;
 		});
 
-		// Склеиваем в одну строку
+		// Glue them together into one line
 		const result = `${tokenLink} → ${innerChains.join(" → ")}`;
 
 		this.chainCache.set(tokenKey, result);
@@ -166,7 +166,7 @@ export class TokenResolver {
 		const originalDef = this.mapping[originalTokenKey];
 		let tokenKey = originalTokenKey;
 
-		// Проходим по цепочке, пока значение – фигурная ссылка
+		// We go through the chain until the value is a curly link
 		const visited = new Set<string>();
 		while (true) {
 			const def = this.mapping[tokenKey];
@@ -175,13 +175,13 @@ export class TokenResolver {
 			if (visited.has(tokenKey)) break;
 			visited.add(tokenKey);
 
-			// Переходим к следующему ключу
+			// Let's move on to the next key.
 			tokenKey = def.value.replace(/[{}]/g, "");
 		}
 
 		const def = this.mapping[tokenKey];
 		if (!def) {
-			// Если ничего не нашли, возвращаем "заглушку"
+			// If nothing is found, we return the "stub"
 			const fallback = { finalValue: tokenRef, type: "unknown" };
 			this.resolveCache.set(tokenRef, fallback);
 			return fallback;
@@ -211,7 +211,7 @@ export class TokenResolver {
 			resolved = {
 				type,
 				props,
-				// берем файл из оригинального определения, чтобы Go Variable вел туда
+				// we take the file from the original definition so that Go Variable points there
 				file: originalDef?.file ? originalDef.file.replace(/^[/\\]+/, "") : normalizedFile,
 			};
 
@@ -236,7 +236,7 @@ export class TokenResolver {
 				file: originalDef?.file ? originalDef.file.replace(/^[/\\]+/, "") : normalizedFile,
 			};
 
-			// --- простой (color, number, text, etc.) ---
+			// --- simple (color, number, text, etc.) ---
 		} else {
 			resolved = {
 				finalValue: this.calculate(tokenKey),
@@ -246,10 +246,10 @@ export class TokenResolver {
 			};
 		}
 
-		// Исходный "ключ" (например "w-button.size.sm.typography")
+		// The original "key" (eg "w-button.size.sm.typography")
 		resolved._originalTokenKey = originalTokenKey;
 
-		// Если были extensions
+		// If there were extensions
 		if (originalDef?.extensions) {
 			resolved.extensions = originalDef.extensions;
 		} else if (def.extensions) {
@@ -268,13 +268,13 @@ export class TokenResolver {
 		if (!def) return [];
 		const step = { token: tokenKey, file: def.file, type: def.type || "unknown" };
 
-		// <-- Changed: приводим к RegExpMatchArray[]
+		// <-- Changed: we lead to RegExpMatchArray[]
 		const matches = Array.from(def.value.matchAll(/{([^}]+)}/g)) as RegExpMatchArray[];
 		if (matches.length === 0) {
 			return [step];
 		}
 
-		// Если есть фигурные ссылки, идём рекурсивно
+		// If there are curly links, we go recursively
 		const nestedSteps = matches.flatMap((m) => {
 			const innerKey = m[1];
 			return this.getResolutionPath(innerKey, visited);

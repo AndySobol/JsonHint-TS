@@ -31,7 +31,7 @@ export function renderComplexTable(propName: string, props: Record<string, any>,
 
 /**
  * Renders a boxShadow group.
- * Если передать parentFile и parentToken, то выводится кликабельная ссылка Go Variable.
+ * If you pass parentFile and parentToken, a clickable Go Variable link is displayed.
  */
 export function renderBoxShadowGroup(propName: string, props: Record<string, any>, parentFile?: string, parentToken?: string, mode: "result" | "source" = "result"): string {
 	// Сгруппируем св-ва по "1.", "2." и т.д.

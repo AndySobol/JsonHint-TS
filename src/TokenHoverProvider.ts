@@ -15,7 +15,7 @@ export interface ExtensionConfig {
 	[key: string]: any;
 }
 
-// Удобная функция для бэйджа
+// Convenient function for badge
 function wrapBadge(text: string): string {
 	return `\`${text}\``;
 }
@@ -45,7 +45,7 @@ export class TokenHoverProvider implements vscode.HoverProvider {
 		let content = "";
 
 		// -----------------------------
-		// 1) boxShadow — особый случай
+		// 1) boxShadow is a special case
 		// -----------------------------
 		if (resolved.type === "boxShadow" && resolved.props) {
 			if (this.config.showIcons !== false && this.icons["boxShadow"]) {
@@ -67,17 +67,17 @@ export class TokenHoverProvider implements vscode.HoverProvider {
 		}
 
 		// ------------------------------
-		// 2) typography (особый заголовок + Aa)
+		// 2) typography (special heading + Aa)
 		// ------------------------------
 		if (resolved.type === "typography" && resolved.props) {
-			// Заголовок "🔤 Result"
+			// Header "🔤 Result"
 			if (this.config.showIcons !== false && this.icons["typography"]) {
 				content += `## ${this.icons["typography"]} Result\n\n`;
 			} else {
 				content += "## Result\n\n";
 			}
 
-			// Превью "Aa"
+			// Preview "Aa"
 			const props = resolved.props as Record<string, any>;
 			const fontFamily = props.fontFamily ? props.fontFamily.result || props.fontFamily.value : "inherit";
 			const fontWeight = props.fontWeight ? props.fontWeight.result || props.fontWeight.value : "normal";
@@ -117,7 +117,7 @@ export class TokenHoverProvider implements vscode.HoverProvider {
 		}
 
 		// ------------------------------------------------
-		// 3) composition, border (и т.д.)
+		// 3) composition, border and more
 		// ------------------------------------------------
 		const complexTypes = ["composition", "border"];
 		if (complexTypes.includes(resolved.type) && resolved.props) {
@@ -158,7 +158,7 @@ export class TokenHoverProvider implements vscode.HoverProvider {
 		}
 
 		// ------------------------------------------------
-		// 4) Прочие (color, number, text, etc.)
+		// 4) Other (color, number, text, etc.)
 		// ------------------------------------------------
 		if (this.config.showIcons !== false && resolved.type && this.icons[resolved.type]) {
 			content += `## ${this.icons[resolved.type]} Result\n\n`;
@@ -166,14 +166,14 @@ export class TokenHoverProvider implements vscode.HoverProvider {
 			content += "## Result\n\n";
 		}
 
-		// Если это цвет
+		// If this is a color
 		if (resolved.type === "color" && resolved.finalValue && resolved.finalValue.startsWith("#")) {
-			// Для цветных токенов показываем только цвет-превью
+			// For color tokens, show only the color preview
 			const { getColorPreview } = require("./utils");
 			content += `${getColorPreview(resolved.finalValue)}\n\n`;
 		}
 
-		// Отображаем finalValue (если есть)
+		// Display finalValue (if any)
 		if (resolved.finalValue !== undefined) {
 			content += `- ${resolved.finalValue}\n\n`;
 		}
@@ -201,7 +201,7 @@ export class TokenHoverProvider implements vscode.HoverProvider {
 				}
 			}
 		} else {
-			// Просто цепочка
+			// Just a chain
 			const tokenKey = tokenRef.replace(/[{}]/g, "");
 			const resolutionPath = this.tokenResolver.getResolutionPath(tokenKey);
 			content += hr.renderSimpleChainTable(resolutionPath, this.icons, this.config);

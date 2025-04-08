@@ -78,8 +78,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 			try {
 				const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath;
 
-				// Если file – абсолютный путь, берем его как есть.
-				// Если относительный – дополним до полного пути с папкой tokens.
+				// If file is an absolute path, we take it as is.
+				// If it is relative, we add it to the full path with the tokens folder.
 				let fullFilePath = "";
 				if (path.isAbsolute(file)) {
 					fullFilePath = file;
@@ -90,7 +90,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 				const doc = await vscode.workspace.openTextDocument(fullFilePath);
 				const editor = await vscode.window.showTextDocument(doc);
 
-				// Если token пустой – покажем начало файла
+				// If token is empty, show the beginning of the file
 				if (!token) {
 					const position = new vscode.Position(0, 0);
 					editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
