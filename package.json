@@ -15,7 +15,8 @@
 	"homepage": "https://github.com/AndySobolev/JsonHint-TS/blob/main/README.md",
 	"scripts": {
 		"build": "webpack",
-		"compile": "tsc -p ."
+		"compile": "tsc -p .",
+		"build-all": "npm install && npm run build && vsce package"
 	},
 	"engines": {
 		"vscode": "^1.99.0"

@@ -273,8 +273,12 @@ export function getGradientPreview(gradientValue: string): string {
 export function getFontPreview(fontFamily: string, fontWeight: string, fontSize: string, lineHeight: string, textDecoration: string, textTransform: string): string {
 	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="50">
     <rect width="120" height="50" fill="black" />
-    <text x="10" y="35" font-family="${fontFamily}" font-weight="${fontWeight}" font-size="${fontSize}"
-          style="line-height:${lineHeight}; text-decoration:${textDecoration}; text-transform:${textTransform};" fill="white">Aa</text>
+    <text x="10" y="35"
+          font-family="${fontFamily}"
+          font-weight="${fontWeight}"
+          font-size="${fontSize}"
+          style="line-height:${lineHeight}; text-decoration:${textDecoration}; text-transform:${textTransform};"
+          fill="white">Aa</text>
   </svg>`;
 	const base64 = Buffer.from(svg).toString("base64");
 	return `![](data:image/svg+xml;base64,${base64})`;

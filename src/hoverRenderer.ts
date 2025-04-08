@@ -31,42 +31,40 @@ export function renderComplexTable(propName: string, props: Record<string, any>,
 
 /**
  * Renders a boxShadow group.
- * If parentFile is provided, a clickable "Go Variable" link is shown.
- * Each property is displayed on a new line in the format:
- *   <name>: {token} → <value>   (if mode == "result")
- * or
- *   <name>: {token} → <chain>   (if mode == "source")
- * Groups are separated by a divider (line of dashes).
+ * Если передать parentFile и parentToken, то выводится кликабельная ссылка Go Variable.
  */
-export function renderBoxShadowGroup(propName: string, props: Record<string, any>, parentFile?: string, mode: "result" | "source" = "result"): string {
-	// Group properties by shadow group (based on the number before the first dot)
+export function renderBoxShadowGroup(propName: string, props: Record<string, any>, parentFile?: string, parentToken?: string, mode: "result" | "source" = "result"): string {
+	// Сгруппируем св-ва по "1.", "2." и т.д.
 	const groups: Record<string, Record<string, any>> = {};
 	Object.keys(props).forEach((key) => {
 		const parts = key.split(".");
-		const group = parts[0];
+		const group = parts[0]; // "1" / "2" / ...
 		const subProp = parts.slice(1).join(".");
 		if (!groups[group]) {
 			groups[group] = {};
 		}
 		groups[group][subProp] = props[key];
 	});
-	// If parentFile is provided, create a "Go Variable" link
-	let header = "";
-	if (parentFile) {
-		const fileName = parentFile.split("/").pop() || parentFile;
-		const args = encodeURIComponent(JSON.stringify([{ file: parentFile, token: "" }]));
-		header = ` ([Go Variable](command:jsonhintTs.revealToken?${args}))`;
+
+	let header = `**${propName}**`;
+	if (parentFile && parentToken) {
+		const args = encodeURIComponent(JSON.stringify([{ file: parentFile, token: parentToken }]));
+		header += ` ([Go Variable](command:jsonhintTs.revealToken?${args}))`;
 	}
+	header += "\n\n";
+
 	const groupKeys = Object.keys(groups).sort();
-	let result = `**${propName}**${header}\n\n`;
+	let result = header;
+
 	groupKeys.forEach((groupKey, index) => {
 		const groupProps = groups[groupKey];
-		// Render each property on a new line (two trailing spaces force line break)
+
 		Object.keys(groupProps).forEach((subProp) => {
 			const item = groupProps[subProp];
 			const display = mode === "source" ? item.chain : item.result;
 			result += `${subProp}: ${item.value} → ${display}  \n`;
 		});
+
 		if (index < groupKeys.length - 1) {
 			result += "\n____________\n\n";
 		}

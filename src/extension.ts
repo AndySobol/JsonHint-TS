@@ -76,14 +76,21 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		vscode.commands.registerCommand("jsonhintTs.revealToken", async (params: { file: string; token: string }) => {
 			const { file, token } = params;
 			try {
-				// Normalize the file path: remove leading slashes
-				const normalizedFile = file.replace(/^[/\\]+/, "");
 				const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath;
-				const fullFilePath = path.join(workspaceFolder, "tokens", normalizedFile);
+
+				// Если file – абсолютный путь, берем его как есть.
+				// Если относительный – дополним до полного пути с папкой tokens.
+				let fullFilePath = "";
+				if (path.isAbsolute(file)) {
+					fullFilePath = file;
+				} else {
+					fullFilePath = path.join(workspaceFolder, "tokens", file);
+				}
+
 				const doc = await vscode.workspace.openTextDocument(fullFilePath);
 				const editor = await vscode.window.showTextDocument(doc);
 
-				// If token is empty, simply reveal the beginning of the file
+				// Если token пустой – покажем начало файла
 				if (!token) {
 					const position = new vscode.Position(0, 0);
 					editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
@@ -95,6 +102,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 					vscode.window.showWarningMessage("Failed to parse JSON");
 					return;
 				}
+
 				function findTokenNode(node: any, tokenParts: string[]): any {
 					if (!node) return null;
 					if (node.type === "object" && Array.isArray(node.children)) {
@@ -107,6 +115,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 					}
 					return null;
 				}
+
 				const tokenParts = token.split(".");
 				const tokenNode = findTokenNode(root, tokenParts);
 				if (tokenNode) {
