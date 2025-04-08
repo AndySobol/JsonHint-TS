@@ -71,13 +71,25 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		})
 	);
 
-	// Command "revealToken" to navigate to token location in JSON file
+	// Command "revealToken" to navigate to the token location in the JSON file
 	context.subscriptions.push(
 		vscode.commands.registerCommand("jsonhintTs.revealToken", async (params: { file: string; token: string }) => {
 			const { file, token } = params;
 			try {
-				const doc = await vscode.workspace.openTextDocument(file);
+				// Normalize the file path: remove leading slashes
+				const normalizedFile = file.replace(/^[/\\]+/, "");
+				const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath;
+				const fullFilePath = path.join(workspaceFolder, "tokens", normalizedFile);
+				const doc = await vscode.workspace.openTextDocument(fullFilePath);
 				const editor = await vscode.window.showTextDocument(doc);
+
+				// If token is empty, simply reveal the beginning of the file
+				if (!token) {
+					const position = new vscode.Position(0, 0);
+					editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
+					return;
+				}
+
 				const root = jsonc.parseTree(doc.getText());
 				if (!root) {
 					vscode.window.showWarningMessage("Failed to parse JSON");

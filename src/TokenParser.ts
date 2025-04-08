@@ -121,7 +121,9 @@ export class TokenResolver {
 		visited.add(tokenKey);
 		const def = this.mapping[tokenKey];
 		if (!def) return "";
-		const fileUri = `file://${path.join(this.tokensDir, def.file)}`;
+		// Normalize file path: remove any leading slashes
+		const normalizedFile = def.file ? def.file.replace(/^[/\\]+/, "") : "";
+		const fileUri = `file://${path.join(this.tokensDir, normalizedFile)}`;
 		const tokenLink = `[${tokenKey}](${fileUri})`;
 		if (!/{([^}]+)}/.test(def.value)) {
 			this.chainCache.set(tokenKey, tokenLink);
@@ -187,20 +189,21 @@ export class TokenResolver {
 			}
 			resolved = { type, props };
 		} else if (type === "boxShadow" && Array.isArray(value)) {
-			const props: Record<string, any> = {};
-			value.forEach((shadow: any, idx: number) => {
-				for (const [prop, propVal] of Object.entries(shadow)) {
-					if (typeof propVal !== "string" || !propVal.startsWith("{")) return;
-					const propTokenKey = propVal.replace(/[{}]/g, "");
-					props[`${idx + 1}.${prop}`] = {
-						value: propVal,
-						result: this.calculate(propTokenKey),
-						chain: this.getResolutionChain(propTokenKey),
-					};
-				}
-			});
-			// Add file – path to the file where this boxShadow is defined
-			resolved = { type, props, file: def.file };
+		  const props: Record<string, any> = {};
+		  value.forEach((shadow: any, idx: number) => {
+		    for (const [prop, propVal] of Object.entries(shadow)) {
+		      if (typeof propVal !== "string" || !propVal.startsWith("{")) return;
+		      const propTokenKey = propVal.replace(/[{}]/g, "");
+		      props[`${idx + 1}.${prop}`] = {
+		        value: propVal,
+		        result: this.calculate(propTokenKey),
+		        chain: this.getResolutionChain(propTokenKey),
+		      };
+		    }
+		  });
+		  // Normalize file path before saving
+		  const normalizedFile = def.file ? def.file.replace(/^[/\\]+/, '') : '';
+		  resolved = { type, props, file: normalizedFile };
 		} else {
 			resolved = { finalValue: this.calculate(tokenKey), chain: this.getResolutionChain(tokenKey), type };
 		}
