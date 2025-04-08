@@ -1,16 +1,24 @@
-const fs = require("fs").promises;
-const path = require("path");
-const { flattenTokens } = require("./TokenParser");
+import * as fsPromises from "fs/promises";
+import * as fs from "fs";
+import * as path from "path";
+import { flattenTokens } from "./TokenParser";
 
-class TokenLoader {
-	constructor(tokensDir, config = {}) {
+type Dirent = fs.Dirent;
+
+export class TokenLoader {
+	tokensDir: string;
+	config: any;
+	mapping: Record<string, any>;
+	ready: boolean;
+
+	constructor(tokensDir: string, config: any = {}) {
 		this.tokensDir = tokensDir;
 		this.config = config;
 		this.mapping = {};
 		this.ready = false;
 	}
 
-	async load() {
+	async load(): Promise<void> {
 		this.mapping = {};
 		this.ready = false;
 		try {
@@ -22,11 +30,11 @@ class TokenLoader {
 		}
 	}
 
-	async _walk(dir) {
-		let entries;
+	private async _walk(dir: string): Promise<void> {
+		let entries: Dirent[];
 		try {
 			console.log(`[JsonHint-TS] Reading directory: ${dir}`);
-			entries = await fs.readdir(dir, { withFileTypes: true });
+			entries = await fsPromises.readdir(dir, { withFileTypes: true });
 		} catch (e) {
 			console.error(`[JsonHint-TS] Failed to read directory: ${dir}`, e);
 			return;
@@ -41,10 +49,10 @@ class TokenLoader {
 		}
 	}
 
-	async _parseFile(filePath) {
+	private async _parseFile(filePath: string): Promise<void> {
 		try {
 			console.log(`[JsonHint-TS] Processing file: ${filePath}`);
-			const contentStr = await fs.readFile(filePath, "utf-8");
+			const contentStr = await fsPromises.readFile(filePath, "utf-8");
 			const json = JSON.parse(contentStr);
 			const relPath = path.relative(this.tokensDir, filePath);
 			flattenTokens(json, "", relPath, this.mapping, null, this.config.allowNoDollar !== false);
@@ -53,5 +61,3 @@ class TokenLoader {
 		}
 	}
 }
-
-module.exports = TokenLoader;

@@ -1,12 +1,12 @@
-const path = require("path");
-const fs = require("fs").promises;
-const { create, all } = require("mathjs");
-const { validTypes } = require("./constants");
+import * as path from "path";
+import * as fs from "fs/promises";
+import { create, all } from "mathjs";
+import { validTypes } from "./constants";
 
-const math = create(all);
+const math = create(all, {});
 math.import({ px: 1, em: 1, rem: 1, "%": 1, deg: 1, s: 1 }, { override: true });
 
-function flattenTokens(obj, prefix, file, mapping, inheritedType = null, allowNoDollar = true) {
+export function flattenTokens(obj: any, prefix: string, file: string, mapping: Record<string, any>, inheritedType: string | null = null, allowNoDollar: boolean = true): void {
 	for (const key in obj) {
 		if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
 		if (key === "$type" || (allowNoDollar && key === "type")) continue;
@@ -26,8 +26,14 @@ function flattenTokens(obj, prefix, file, mapping, inheritedType = null, allowNo
 	}
 }
 
-class TokenResolver {
-	constructor(tokensDir, config) {
+export class TokenResolver {
+	tokensDir: string;
+	config: any;
+	mapping: Record<string, any>;
+	chainCache: Map<string, string>;
+	resolveCache: Map<string, any>;
+
+	constructor(tokensDir: string, config: any) {
 		this.tokensDir = tokensDir;
 		this.config = config;
 		this.mapping = {};
@@ -35,7 +41,7 @@ class TokenResolver {
 		this.resolveCache = new Map();
 	}
 
-	async loadTokens() {
+	async loadTokens(): Promise<void> {
 		this.mapping = {};
 		this.chainCache.clear();
 		this.resolveCache.clear();
@@ -43,7 +49,7 @@ class TokenResolver {
 		console.log(`[JsonHint-TS] Loaded ${Object.keys(this.mapping).length} tokens`);
 	}
 
-	async _walk(dir) {
+	private async _walk(dir: string): Promise<void> {
 		try {
 			const entries = await fs.readdir(dir, { withFileTypes: true });
 			for (const entry of entries) {
@@ -59,7 +65,7 @@ class TokenResolver {
 		}
 	}
 
-	async _parseFile(filePath) {
+	private async _parseFile(filePath: string): Promise<void> {
 		try {
 			console.log(`[JsonHint-TS] Processing file: ${filePath}`);
 			const contentStr = await fs.readFile(filePath, "utf-8");
@@ -71,10 +77,10 @@ class TokenResolver {
 		}
 	}
 
-	calculate(tokenKey) {
+	calculate(tokenKey: string): string {
 		const def = this.mapping[tokenKey];
 		if (!def) return `{${tokenKey}}`;
-		const expr = this.resolveAll(def.value).trim();
+		let expr = this.resolveAll(def.value).trim();
 		const numericTypes = ["sizing", "fontSizes", "spacing", "borderRadius", "borderWidth", "dimension", "number"];
 		if (numericTypes.includes(def.type)) {
 			if (/^-?\d+(\.\d+)?(px|em|rem|%)?$/.test(expr)) return expr;
@@ -89,12 +95,12 @@ class TokenResolver {
 		return expr;
 	}
 
-	resolveAll(str) {
+	resolveAll(str: string): string {
 		let prev = "";
 		let iterations = 0;
 		while (str !== prev && iterations < 20) {
 			prev = str;
-			str = str.replace(/{([^}]+)}/g, (_, tokenKey) => {
+			str = str.replace(/{([^}]+)}/g, (_, tokenKey: string) => {
 				if (!this.mapping[tokenKey]) return `{${tokenKey}}`;
 				return this.mapping[tokenKey].value || `{${tokenKey}}`;
 			});
@@ -106,30 +112,34 @@ class TokenResolver {
 		return str;
 	}
 
-	getResolutionChain(tokenKey, visited = new Set()) {
-		if (this.chainCache.has(tokenKey)) return this.chainCache.get(tokenKey);
+	getResolutionChain(tokenKey: string, visited: Set<string> = new Set()): string {
+		if (this.chainCache.has(tokenKey)) return this.chainCache.get(tokenKey)!;
 		if (visited.has(tokenKey)) return "⚠️ Cycle";
 		visited.add(tokenKey);
 		const def = this.mapping[tokenKey];
-		if (!def) return null;
+		if (!def) return "";
 		const fileUri = `file://${path.join(this.tokensDir, def.file)}`;
 		const tokenLink = `[${tokenKey}](${fileUri})`;
 		if (!/{([^}]+)}/.test(def.value)) {
 			this.chainCache.set(tokenKey, tokenLink);
 			return tokenLink;
 		}
-		const innerChain = def.value.replace(/{([^}]+)}/g, (_, innerKey) => this.getResolutionChain(innerKey, visited) || `{${innerKey}}`);
-		const result = `${tokenLink} → ${innerChain}`;
+		const matches = Array.from(def.value.matchAll(/{([^}]+)}/g)) as RegExpMatchArray[];
+		let innerChains: string[] = [];
+		for (const match of matches) {
+			const innerKey: string = match[1];
+			innerChains.push(this.getResolutionChain(innerKey, visited) || `{${innerKey}}`);
+		}
+		const result = `${tokenLink} → ${innerChains.join(" → ")}`;
 		this.chainCache.set(tokenKey, result);
 		return result;
 	}
 
-	resolveToken(tokenRef) {
-		// Let's save the original key and definition so as not to lose the extensions.
-		let originalTokenKey = tokenRef.replace(/[{}]/g, "");
-		let originalDef = this.mapping[originalTokenKey];
+	resolveToken(tokenRef: string): any {
+		const originalTokenKey = tokenRef.replace(/[{}]/g, "");
+		const originalDef = this.mapping[originalTokenKey];
 		let tokenKey = originalTokenKey;
-		const visited = new Set();
+		const visited = new Set<string>();
 		while (true) {
 			const def = this.mapping[tokenKey];
 			if (!def || typeof def.value !== "string" || !def.value.startsWith("{")) break;
@@ -138,7 +148,7 @@ class TokenResolver {
 			tokenKey = def.value.replace(/[{}]/g, "");
 		}
 		const def = this.mapping[tokenKey];
-		let resolved;
+		let resolved: any;
 		if (!def) {
 			resolved = { finalValue: tokenRef, type: "unknown" };
 			this.resolveCache.set(tokenRef, resolved);
@@ -146,7 +156,7 @@ class TokenResolver {
 		}
 		const { type, value } = def;
 		if (type === "composition" && typeof value === "object") {
-			const props = {};
+			const props: Record<string, any> = {};
 			for (const [prop, propVal] of Object.entries(value)) {
 				if (typeof propVal !== "string" || !propVal.startsWith("{")) continue;
 				const nestedTokenKey = propVal.replace(/[{}]/g, "");
@@ -161,7 +171,7 @@ class TokenResolver {
 			}
 			resolved = { type, props };
 		} else if (type === "typography" && typeof value === "object") {
-			const props = {};
+			const props: Record<string, any> = {};
 			for (const [prop, propVal] of Object.entries(value)) {
 				if (typeof propVal !== "string" || !propVal.startsWith("{")) continue;
 				const propTokenKey = propVal.replace(/[{}]/g, "");
@@ -174,8 +184,8 @@ class TokenResolver {
 			}
 			resolved = { type, props };
 		} else if (type === "boxShadow" && Array.isArray(value)) {
-			const props = {};
-			value.forEach((shadow, idx) => {
+			const props: Record<string, any> = {};
+			value.forEach((shadow: any, idx: number) => {
 				for (const [prop, propVal] of Object.entries(shadow)) {
 					if (typeof propVal !== "string" || !propVal.startsWith("{")) return;
 					const propTokenKey = propVal.replace(/[{}]/g, "");
@@ -186,11 +196,11 @@ class TokenResolver {
 					};
 				}
 			});
-			resolved = { type, props };
+			// Добавляем file – путь к файлу, где определён данный boxShadow
+			resolved = { type, props, file: def.file };
 		} else {
 			resolved = { finalValue: this.calculate(tokenKey), chain: this.getResolutionChain(tokenKey), type };
 		}
-		// We pass extensions from the original definition or from the current one.
 		if (originalDef && originalDef.extensions) {
 			resolved.extensions = originalDef.extensions;
 		} else if (def && def.extensions) {
@@ -200,16 +210,19 @@ class TokenResolver {
 		return resolved;
 	}
 
-	getResolutionPath(tokenKey, visited = new Set()) {
+	getResolutionPath(tokenKey: string, visited: Set<string> = new Set()): any[] {
 		if (visited.has(tokenKey)) return [];
 		visited.add(tokenKey);
 		const def = this.mapping[tokenKey];
 		if (!def) return [];
 		const step = { token: tokenKey, file: def.file, type: def.type || "unknown" };
 		if (!/{([^}]+)}/.test(def.value)) return [step];
-		return [step, ...Array.from(def.value.matchAll(/{([^}]+)}/g)).flatMap(([, innerKey]) => this.getResolutionPath(innerKey, visited))];
+		const matches = Array.from(def.value.matchAll(/{([^}]+)}/g)) as RegExpMatchArray[];
+		let paths: any[] = [];
+		for (const match of matches) {
+			const innerKey: string = match[1];
+			paths.push(...this.getResolutionPath(innerKey, visited));
+		}
+		return [step, ...paths];
 	}
 }
-
-module.exports = TokenResolver;
-module.exports.flattenTokens = flattenTokens;

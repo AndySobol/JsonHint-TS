@@ -1,8 +1,9 @@
-const vscode = require("vscode");
-const jsonc = require("jsonc-parser");
-const { icons, validTypes } = require("./constants");
+import * as vscode from "vscode";
+import * as jsonc from "jsonc-parser";
+import { icons, validTypes } from "./constants";
+import * as fs from "fs"; // используется для Buffer
 
-let colorjs;
+let colorjs: any;
 try {
 	colorjs = require("colorjs.io");
 } catch (e) {
@@ -11,24 +12,22 @@ try {
 
 // --- Color utils ---
 
-function isColor(value) {
+export function isColor(value: string): boolean {
 	return /^#([0-9A-Fa-f]{3,8})$/.test(value);
 }
 
-function adjustColor(hex, action, percent) {
+export function adjustColor(hex: string, action: "lighten" | "darken", percent: number): string {
 	if (!isColor(hex)) return hex;
-	// If colorjs is available, you can add an implementation based on it.
 	if (colorjs) {
 		try {
 			const col = new colorjs.Color(hex);
-			// Here you can use colorjs methods to change the brightness.
+			// При необходимости можно реализовать корректировку цвета через colorjs
 		} catch (e) {
 			console.error("colorjs error:", e);
 		}
 	}
-	// Fallback implementation:
-	const parseComponent = (h) => parseInt(h.length === 1 ? h + h : h, 16);
-	let r, g, b;
+	const parseComponent = (h: string) => parseInt(h.length === 1 ? h + h : h, 16);
+	let r: number, g: number, b: number;
 	if (hex.length === 4) {
 		r = parseComponent(hex[1]);
 		g = parseComponent(hex[2]);
@@ -39,17 +38,17 @@ function adjustColor(hex, action, percent) {
 		b = parseComponent(hex.slice(5, 7));
 	}
 	const adjustment = Math.round(255 * (percent / 100));
-	const apply = (c) => {
+	const apply = (c: number) => {
 		if (action === "lighten") return Math.min(255, c + adjustment);
 		if (action === "darken") return Math.max(0, c - adjustment);
 		return c;
 	};
-	const toHex = (c) => ("0" + c.toString(16)).slice(-2);
+	const toHex = (c: number) => ("0" + c.toString(16)).slice(-2);
 	return `#${toHex(apply(r))}${toHex(apply(g))}${toHex(apply(b))}`;
 }
 
-function mixColors(color1, color2, weight) {
-	function hexToRgb(hex) {
+export function mixColors(color1: string, color2: string, weight: number): string {
+	function hexToRgb(hex: string) {
 		hex = hex.replace("#", "");
 		if (hex.length === 3) {
 			hex = hex
@@ -63,7 +62,7 @@ function mixColors(color1, color2, weight) {
 		const b = bigint & 255;
 		return { r, g, b };
 	}
-	function rgbToHex(r, g, b) {
+	function rgbToHex(r: number, g: number, b: number) {
 		return (
 			"#" +
 			[r, g, b]
@@ -83,7 +82,7 @@ function mixColors(color1, color2, weight) {
 	return rgbToHex(r, g, b);
 }
 
-function applyColorModifiers(color, modifiers) {
+export function applyColorModifiers(color: string, modifiers: string[]): string {
 	let modifiedColor = color;
 	if (!Array.isArray(modifiers)) return modifiedColor;
 	modifiers.forEach((mod) => {
@@ -118,9 +117,9 @@ function applyColorModifiers(color, modifiers) {
 
 // --- Color conversion utilities ---
 
-function hexToHSL(H) {
+export function hexToHSL(H: string): string {
 	H = H.replace("#", "");
-	let r, g, b;
+	let r: number, g: number, b: number;
 	if (H.length === 3) {
 		r = parseInt(H[0] + H[0], 16);
 		g = parseInt(H[1] + H[1], 16);
@@ -157,25 +156,25 @@ function hexToHSL(H) {
 	return `hsl(${h}, ${s}%, ${l}%)`;
 }
 
-function hexToSRGB(hex) {
+export function hexToSRGB(hex: string): string {
 	return hex;
 }
 
-function hexToP3(hex) {
+export function hexToP3(hex: string): string {
 	return hex;
 }
 
-function hexToLCH(hex) {
+export function hexToLCH(hex: string): string {
 	return hex;
 }
 
 // --- Token utils ---
 
-function isComplexType(type, config) {
+export function isComplexType(type: string, config: any): boolean {
 	return config.complexTypes.includes(type);
 }
 
-function findNearestType(node) {
+export function findNearestType(node: any): string | null {
 	while (node) {
 		const typeNode = jsonc.findNodeAtLocation(node, ["$type"]);
 		if (typeNode && typeof typeNode.value === "string" && validTypes.has(typeNode.value)) {
@@ -186,36 +185,34 @@ function findNearestType(node) {
 	return null;
 }
 
-function isRelevantToken(tokenString, config) {
-	return !config.noisyTokens.some((noisy) => tokenString.includes(noisy));
+export function isRelevantToken(tokenString: string, config: any): boolean {
+	return !config.noisyTokens.some((noisy: string) => tokenString.includes(noisy));
 }
 
 // --- Chain Renderer ---
 
-function renderChain(chain, mapping, config) {
+export function renderChain(chain: string, mapping: Record<string, any>, config: any): string {
 	if (!chain) return "";
 	const maxLength = config.maxChainLength || 5;
 	let parts = chain.split("→").map((s) => s.trim());
 	if (parts.length > maxLength) parts = parts.slice(-maxLength);
-	const printed = new Set();
+	const printed = new Set<string>();
 	let result = "";
 	for (const part of parts) {
 		if (!part || printed.has(part)) continue;
 		printed.add(part);
 		const match = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
 		if (!match) continue;
-		const [_, tokenName, fileLink] = match;
-		const tokenDef = mapping[tokenName];
-		const tokenIcon = config.showIcons ? icons[tokenDef?.type] || "" : "";
-		const relativePath = vscode.workspace.asRelativePath(fileLink.replace("file://", ""));
-		result += `${tokenIcon} [${tokenName}](${fileLink})   ${relativePath}\n`;
+		const [, tokenName] = match;
+		const args = encodeURIComponent(JSON.stringify([{ tokenKey: tokenName }]));
+		result += `[${tokenName}](command:jsonTokensHint.viewTokenTooltip?${args})\n`;
 	}
 	return result;
 }
 
 // --- Color Preview ---
 
-function getColorPreview(colorValue) {
+export function getColorPreview(colorValue: string): string {
 	if (!isColor(colorValue)) return "";
 	const size = 14;
 	const svg = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
@@ -228,11 +225,11 @@ function getColorPreview(colorValue) {
     <rect width="${size}" height="${size}" fill="url(#checkers)"/>
     <rect width="${size}" height="${size}" fill="${colorValue}" stroke="#000" stroke-width="0.5"/>
   </svg>`;
-	return `![color](data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")})`;
+	const base64 = Buffer.from(svg).toString("base64");
+	return `![](data:image/svg+xml;base64,${base64})`;
 }
 
-// --- Gradient Preview ---
-function getGradientPreview(gradientValue) {
+export function getGradientPreview(gradientValue: string): string {
 	if (typeof gradientValue !== "string" || !gradientValue.startsWith("linear-gradient(")) {
 		const svg = `<svg width="124" height="20" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -244,7 +241,8 @@ function getGradientPreview(gradientValue) {
         </defs>
         <rect width="124" height="20" fill="url(#grad)" />
       </svg>`;
-		return `![gradient](data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")})`;
+		const base64 = Buffer.from(svg).toString("base64");
+		return `![](data:image/svg+xml;base64,${base64})`;
 	}
 	let inner = gradientValue.slice("linear-gradient(".length, -1).trim();
 	let parts = inner.split(",");
@@ -267,57 +265,17 @@ function getGradientPreview(gradientValue) {
     </defs>
     <rect width="124" height="20" fill="url(#grad)" />
   </svg>`;
-	return `![gradient](data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")})`;
+	const base64 = Buffer.from(svg).toString("base64");
+	return `![](data:image/svg+xml;base64,${base64})`;
 }
 
-// --- Color Modifiers Preview ---
-function getColorModifiersPreview(modifiedColor, modifiers) {
-	// Calculating fuck transformations
-	const hsl = hexToHSL(modifiedColor);
-	const srgb = hexToSRGB(modifiedColor);
-	const p3 = hexToP3(modifiedColor);
-	const lch = hexToLCH(modifiedColor);
-	const hex = modifiedColor;
-	let fillColor = modifiedColor;
-	let fillOpacity = 1;
-	if (modifiedColor.length === 9) {
-		fillColor = modifiedColor.substring(0, 7);
-		fillOpacity = (parseInt(modifiedColor.substring(7, 9), 16) / 255).toFixed(2);
-	}
-	const svg = `<svg width="200" height="60" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <pattern id="checkers" width="8" height="8" patternUnits="userSpaceOnUse">
-        <rect width="4" height="4" fill="#ccc"/>
-        <rect x="4" y="4" width="4" height="4" fill="#ccc"/>
-      </pattern>
-    </defs>
-    <rect x="0" y="0" width="200" height="30" fill="url(#checkers)"/>
-    <rect x="0" y="0" width="200" height="30" fill="${fillColor}" fill-opacity="${fillOpacity}" stroke="#000" stroke-width="0.5"/>
-    <text x="5" y="45" font-size="10" fill="#000">HEX: ${hex}</text>
-    <text x="5" y="55" font-size="10" fill="#000">HSL: ${hsl}</text>
-    <text x="105" y="45" font-size="10" fill="#000">sRGB: ${srgb}</text>
-    <text x="105" y="55" font-size="10" fill="#000">P3: ${p3}</text>
-    <text x="5" y="65" font-size="10" fill="#000">LCH: ${lch}</text>
+// --- Font Preview ---
+export function getFontPreview(fontFamily: string, fontWeight: string, fontSize: string, lineHeight: string, textDecoration: string, textTransform: string): string {
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="50">
+    <rect width="120" height="50" fill="black" />
+    <text x="10" y="35" font-family="${fontFamily}" font-weight="${fontWeight}" font-size="${fontSize}"
+          style="line-height:${lineHeight}; text-decoration:${textDecoration}; text-transform:${textTransform};" fill="white">Aa</text>
   </svg>`;
-	return `![colormod](data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")})`;
+	const base64 = Buffer.from(svg).toString("base64");
+	return `![](data:image/svg+xml;base64,${base64})`;
 }
-
-module.exports = {
-	isColor,
-	adjustColor,
-	applyColorModifiers,
-	mixColors,
-	hexToHSL,
-	hexToSRGB,
-	hexToP3,
-	hexToLCH,
-	isComplexType,
-	findNearestType,
-	isRelevantToken,
-	renderChain,
-	getColorPreview,
-	getGradientPreview,
-	getColorModifiersPreview,
-	icons,
-	validTypes,
-};
