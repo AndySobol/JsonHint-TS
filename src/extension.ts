@@ -17,17 +17,35 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		return;
 	}
 
-	// Use the configuration namespace "jsonhintTs"
+	// Using the "jsonhintTs" settings space
 	extensionConfig = vscode.workspace.getConfiguration("jsonhintTs");
 
-	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+	// The main status bar element that displays the status of token loading.
+	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
 	statusBarItem.text = "jsonhintTs: Initializing...";
 	statusBarItem.tooltip = "jsonhintTs is active";
 	statusBarItem.show();
 	context.subscriptions.push(statusBarItem);
 
+	// *** New: Add token refresh button (refresh icon) to status bar ***
+	const refreshStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	refreshStatusBarItem.text = "$(sync) Refresh Tokens";
+	refreshStatusBarItem.tooltip = "Force refresh tokens";
+	refreshStatusBarItem.command = "jsonhintTs.forceRefresh";
+	refreshStatusBarItem.show();
+	context.subscriptions.push(refreshStatusBarItem);
+
+	// Registering a command to manually update tokens
+	context.subscriptions.push(
+		vscode.commands.registerCommand("jsonhintTs.forceRefresh", async () => {
+			statusBarItem.text = "$(sync~spin) jsonhintTs: Refreshing tokens...";
+			await reloadTokens();
+			vscode.window.showInformationMessage("Tokens successfully refreshed.");
+		})
+	);
+
+	const tokensDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "tokens");
 	if (!tokenResolver) {
-		const tokensDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "tokens");
 		tokenResolver = new TokenResolver(tokensDir, extensionConfig);
 		await tokenResolver.loadTokens();
 		statusBarItem.text = `$(zap) jsonhintTs: Loaded ${Object.keys(tokenResolver.mapping).length} tokens`;
@@ -35,13 +53,13 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
 	const selector = { language: "json", scheme: "file" };
 
-	// Register Hover Provider
+	// РHover Provider Registration
 	context.subscriptions.push(vscode.languages.registerHoverProvider(selector, new TokenHoverProvider(tokenResolver, extensionConfig)));
 
-	// Register Completion Provider for "{" character
+	// Registering Completion Provider for the symbol "{"
 	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(selector, new TokenCompletion(tokenResolver, extensionConfig), "{"));
 
-	// Register command to open detailed tooltip WebView
+	// Command to open detailed view of token in WebView
 	context.subscriptions.push(
 		vscode.commands.registerCommand("jsonhintTs.viewTokenTooltip", async (params: { tokenKey: string }[]) => {
 			const tokenKey = params && params.length ? params[0].tokenKey : "";
@@ -54,7 +72,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		})
 	);
 
-	// File watcher for token JSON files
+	// File watcher for JSON files with tokens
 	const tokensPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "tokens");
 	const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(tokensPath, "**/*.json"));
 	watcher.onDidChange(() => debounceReload());
@@ -62,7 +80,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 	watcher.onDidDelete(() => debounceReload());
 	context.subscriptions.push(watcher);
 
-	// Watch for configuration changes
+	// Monitoring changes in settings
 	context.subscriptions.push(
 		vscode.workspace.onDidChangeConfiguration((e) => {
 			if (e.affectsConfiguration("jsonhintTs")) {
@@ -71,15 +89,14 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 		})
 	);
 
-	// Command "revealToken" to navigate to the token location in the JSON file
+	// The "revealToken" command to navigate to the location of the token definition in the file
 	context.subscriptions.push(
 		vscode.commands.registerCommand("jsonhintTs.revealToken", async (params: { file: string; token: string }) => {
 			const { file, token } = params;
 			try {
 				const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath;
 
-				// If file is an absolute path, we take it as is.
-				// If it is relative, we add it to the full path with the tokens folder.
+				// If the path is absolute, we use it, otherwise we supplement the path to the tokens
 				let fullFilePath = "";
 				if (path.isAbsolute(file)) {
 					fullFilePath = file;
@@ -90,7 +107,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 				const doc = await vscode.workspace.openTextDocument(fullFilePath);
 				const editor = await vscode.window.showTextDocument(doc);
 
-				// If token is empty, show the beginning of the file
+				// If token is empty, show start of file
 				if (!token) {
 					const position = new vscode.Position(0, 0);
 					editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);

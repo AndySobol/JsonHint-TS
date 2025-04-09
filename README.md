@@ -75,16 +75,22 @@ Full resolution chain for sizing:
 
 ## ⚙️ Extension Settings
 
-| Setting            | Description                        | Default                                    |
-| ------------------ | ---------------------------------- | ------------------------------------------ |
-| `inheritanceStyle` | Style of inheritance chain display | `compact`                                  |
-| `showIcons`        | Show icons in hover                | `true`                                     |
-| `showArrows`       | Show arrows between tokens         | `true`                                     |
-| `complexTypes`     | Types rendered as tables           | `["typography","boxShadow","composition"]` |
-| `noisyTokens`      | Tokens to exclude from chain       | `["core.ly.tab.base",...]`                 |
-| `maxChainLength`   | Maximum resolution depth           | `5`                                        |
-| `maxSuggestions`   | Max autocomplete suggestions       | `300`                                      |
-| `allowNoDollar`    | Enables W3C DTCG ($type) support   | `true`                                      |
+The extension supports the following settings, which you can configure in the VSCode settings:
+
+| Setting                               | Description                                                                                                        | Default                                                            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| `jsonhintTs.tooltipBackgroundColor`   | Background color for the token tooltip view.                                                                       | `#1e1e1e`                                                          |
+| `jsonhintTs.tooltipTextColor`         | Text color for the token tooltip view.                                                                             | `#d4d4d4`                                                          |
+| `jsonhintTs.tooltipFontSize`          | Font size for the token tooltip text.                                                                              | `14px`                                                             |
+| `jsonhintTs.tooltipAnimationDuration` | Animation duration (fade-in) for displaying token tooltips.                                                        | `0.3s`                                                             |
+| `jsonhintTs.inheritanceStyle`         | Style for displaying the token inheritance chain:<br> • `compact` – concise,<br> • `table` – displayed as a table. | `compact`                                                          |
+| `jsonhintTs.showIcons`                | Flag that determines whether to show icons for token types in tooltips.                                            | `true`                                                             |
+| `jsonhintTs.showArrows`               | Flag to enable displaying arrows between tokens in the inheritance chain.                                          | `true`                                                             |
+| `jsonhintTs.complexTypes`             | Array of token types that use an extended display format (e.g., table).                                            | `["typography", "boxShadow", "composition"]`                       |
+| `jsonhintTs.noisyTokens`              | Array of tokens to exclude from the inheritance chain (noisy tokens).                                              | `["core.ly.tab.base", "cfg.scale.base.tab", "cfg.scale.mult.tab"]` |
+| `jsonhintTs.maxChainLength`           | Maximum depth (number of steps) of the inheritance chain shown in the tooltip.                                     | `5`                                                                |
+| `jsonhintTs.maxSuggestions`           | Maximum number of autocomplete suggestions to prevent UI lag.                                                      | `300`                                                              |
+| `jsonhintTs.allowNoDollar`            | If set to `true`, the extension will recognize tokens defined without a leading `$` symbol.                         | `true`                                                             |
 
 ---
 
