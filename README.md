@@ -26,29 +26,13 @@ A VSCode extension for working with [Tokens Studio](https://tokens.studio) JSON 
 When hovering over a token, clickable links are shown. Clicking on a token automatically opens the corresponding file and highlights the exact line where that token is defined. This feature leverages VS Code's API to open documents, reveal ranges, and apply temporary highlights—streamlining your workflow and making token management more intuitive.  
 <img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/navigation.gif" alt="Token Navigation" />
 
-### 🟣 Typography Details
+### 🔤 Typography Details
 Shows fully resolved typography properties:  
 <img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/show-typography2.png" alt="Typography Details" />
 
 ### 🎨 Color Tooltip
 Instant color preview:  
 <img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/hint-color.png" alt="Color Tooltip" />
-
-### 📏 Sizing Tooltip
-Works with sizing tokens:  
-<img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/hint-size.png" alt="Sizing Tooltip" />
-
-### ✨ Typography Autocomplete
-Smart autocomplete with resolved tokens:  
-<img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/hint-typography.png" alt="Typography Autocomplete" />
-
-### ☁️ Box Shadow Source
-See how complex boxShadow compositions resolve:  
-<img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/show-box-shadow-source.png" alt="Box Shadow Source" />
-
-### ☁️ Box Shadow Result
-Full visualization of the box shadow chain:  
-<img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/show-box-shadow.png" alt="Box Shadow Result" />
 
 ### 🎨 Color Resolution
 Resolve color composition with full trace:  
@@ -62,13 +46,29 @@ Resolve gradient composition with full trace:
 Resolve alpha, mix composition with full trace:  
 <img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/hint-alpha-color.png" alt="Color Modifiers Resolution" />
 
-### 📐 Dimension Tooltip
-See all dimensions calculated:  
-<img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/show-size.png" alt="Dimension Tooltip" />
+### ☁️ Box Shadow Source
+See how complex boxShadow compositions resolve:  
+<img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/show-box-shadow-source.png" alt="Box Shadow Source" />
+
+### ☁️ Box Shadow Result
+Full visualization of the box shadow chain:  
+<img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/show-box-shadow.png" alt="Box Shadow Result" />
+
+### 📏 Sizing Tooltip
+Works with sizing tokens:  
+<img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/hint-size.png" alt="Sizing Tooltip" />
 
 ### ➕ Sizing Chain
 Full resolution chain for sizing:  
 <img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/show-sizing.png" alt="Sizing Chain" />
+
+### 📐 Dimension Tooltip
+See all dimensions calculated:  
+<img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/show-size.png" alt="Dimension Tooltip" />
+
+### ✨ Typography Autocomplete
+Smart autocomplete with resolved tokens:  
+<img src="https://github.com/AndySobol/JsonHint-TS/raw/HEAD/screenshots/hint-typography.png" alt="Typography Autocomplete" />
 
 ---
 
@@ -89,13 +89,10 @@ The extension supports the following settings, which you can configure in the VS
 | `jsonhintTs.noisyTokens`              | Array of tokens to exclude from the inheritance chain (noisy tokens).                                              | `["core.ly.tab.base", "cfg.scale.base.tab", "cfg.scale.mult.tab"]` |
 | `jsonhintTs.maxChainLength`           | Maximum depth (number of steps) of the inheritance chain shown in the tooltip.                                     | `5`                                                                |
 | `jsonhintTs.maxSuggestions`           | Maximum number of autocomplete suggestions to prevent UI lag.                                                      | `300`                                                              |
-| `jsonhintTs.allowNoDollar`            | If set to `true`, the extension will recognize tokens defined without a leading `$` symbol.                        | `true`                                                             |
+| `jsonhintTs.allowNoDollar`            | If set to `true`, the extension will recognize tokens defined without a leading `$` symbol.                         | `true`                                                             |
 
 ---
 
-## 📹 Embedding Videos
-
-Since GitHub does not support embedded video players directly in markdown, a common solution is to use an image preview that links to an external video (for example, on YouTube). For example:
-
-```markdown
-[![Watch the video](https://raw.githubusercontent.com/AndySobol/JsonHint-TS/HEAD/screenshots/video-preview.jpg)](https://www.youtube.com/watch?v=VIDEO_ID)
+## ❤️ Credits
+Thanks to the **Tokens Studio** team and community.
+And also huge thanks to **Gleb Rotachev** ❤️.
