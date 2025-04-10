@@ -4,7 +4,7 @@
 	"publisher": "andySobolev",
 	"license": "Proprietary",
 	"description": "Extension to display resolved token values from JSON with full resolution chain, compatible with Tokens Studio logic.",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/AndySobolev/JsonHint-TS"
@@ -16,7 +16,8 @@
 	"scripts": {
 		"build": "webpack",
 		"compile": "tsc -p .",
-		"build-all": "npm install && npm run build && vsce package"
+		"build-all": "npm install && npm run build && vsce package",
+		"release": "npm run build-all && vsce publish"
 	},
 	"engines": {
 		"vscode": "^1.99.0"
