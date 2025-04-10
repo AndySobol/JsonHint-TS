@@ -32,6 +32,11 @@
 		"onLanguage:jsonc"
 	],
 	"main": "./dist/extension.js",
+	"files": [
+  	"dist",
+  	"icon.png",
+  	"screenshots"
+	],
 	"contributes": {
 		"configuration": {
 			"title": "jsonhint-ts",
