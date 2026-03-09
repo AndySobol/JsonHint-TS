@@ -1,174 +1,223 @@
-import * as vscode from "vscode";
-import * as jsonc from "jsonc-parser";
-import * as path from "path";
-import { TokenResolver } from "./TokenParser";
-import { TokenHoverProvider } from "./TokenHoverProvider";
-import { TokenCompletion } from "./TokenCompletion";
-import { TokenTooltipView } from "./tokenTooltipView";
+/**
+ * SXL Resolver — VS Code extension entry point.
+ *
+ * Provides design token intellisense: hover previews with resolved values,
+ * visual type previews, inheritance chains, autocomplete, and go-to-definition.
+ * Works in JSON (token references) and CSS/SCSS/TSX (var(--token-name)).
+ */
 
-let tokenResolver: TokenResolver;
-let reloadTimer: NodeJS.Timeout | undefined;
-let extensionConfig: vscode.WorkspaceConfiguration;
-let statusBarItem: vscode.StatusBarItem;
+import * as vscode from "vscode";
+import * as path from "path";
+import * as jsonc from "jsonc-parser";
+import { TokenStore } from "./core/TokenStore";
+import { TokenResolver } from "./core/TokenResolver";
+import { getConfig, type ExtensionConfig } from "./core/types";
+import { CssMapping } from "./utils/cssMapping";
+import { CssVariableStore } from "./utils/cssVariableStore";
+import { JsonHoverProvider } from "./providers/JsonHoverProvider";
+import { CssHoverProvider, CSS_LANGUAGES } from "./providers/CssHoverProvider";
+import { CompletionProvider } from "./providers/CompletionProvider";
+import { DefinitionProvider } from "./providers/DefinitionProvider";
+
+let store: TokenStore;
+let resolver: TokenResolver;
+let cssMapping: CssMapping;
+let cssVarStore: CssVariableStore;
+let config: ExtensionConfig;
+let statusBar: vscode.StatusBarItem;
+let reloadTimer: ReturnType<typeof setTimeout> | undefined;
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-	if (!vscode.workspace.workspaceFolders?.length) {
-		vscode.window.showErrorMessage("jsonhintTs: Workspace not found.");
-		return;
-	}
+  const folders = vscode.workspace.workspaceFolders;
+  if (!folders?.length) {
+    vscode.window.showErrorMessage("SXL Resolver: No workspace folder found.");
+    return;
+  }
 
-	// Using the "jsonhintTs" settings space
-	extensionConfig = vscode.workspace.getConfiguration("jsonhintTs");
+  const workspaceRoot = folders[0].uri.fsPath;
 
-	// The main status bar element that displays the status of token loading.
-	statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-	statusBarItem.text = "jsonhintTs: Initializing...";
-	statusBarItem.tooltip = "jsonhintTs is active";
-	statusBarItem.show();
-	context.subscriptions.push(statusBarItem);
+  config = readConfig();
 
-	// *** New: Add token refresh button (refresh icon) to status bar ***
-	const refreshStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-	refreshStatusBarItem.text = "$(sync) Refresh Tokens";
-	refreshStatusBarItem.tooltip = "Force refresh tokens";
-	refreshStatusBarItem.command = "jsonhintTs.forceRefresh";
-	refreshStatusBarItem.show();
-	context.subscriptions.push(refreshStatusBarItem);
+  // Status bar
+  statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  statusBar.text = "$(loading~spin) SXL Resolver: loading...";
+  statusBar.tooltip = "SXL Resolver – Design Token Intellisense";
+  statusBar.show();
+  context.subscriptions.push(statusBar);
 
-	// Registering a command to manually update tokens
-	context.subscriptions.push(
-		vscode.commands.registerCommand("jsonhintTs.forceRefresh", async () => {
-			statusBarItem.text = "$(sync~spin) jsonhintTs: Refreshing tokens...";
-			await reloadTokens();
-			vscode.window.showInformationMessage("Tokens successfully refreshed.");
-		})
-	);
+  const refreshBtn = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 99);
+  refreshBtn.text = "$(sync) Refresh Tokens";
+  refreshBtn.tooltip = "Force reload all design tokens";
+  refreshBtn.command = "sxlResolver.forceRefresh";
+  refreshBtn.show();
+  context.subscriptions.push(refreshBtn);
 
-	const tokensDir = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "tokens");
-	if (!tokenResolver) {
-		tokenResolver = new TokenResolver(tokensDir, extensionConfig);
-		await tokenResolver.loadTokens();
-		statusBarItem.text = `$(zap) jsonhintTs: Loaded ${Object.keys(tokenResolver.mapping).length} tokens`;
-	}
+  // Initialize core
+  store = new TokenStore();
+  store.configure(workspaceRoot, config);
+  resolver = new TokenResolver(store);
+  cssMapping = new CssMapping();
+  cssVarStore = new CssVariableStore();
 
-	const selector = { language: "json", scheme: "file" };
+  await loadTokens(workspaceRoot);
 
-	// РHover Provider Registration
-	context.subscriptions.push(vscode.languages.registerHoverProvider(selector, new TokenHoverProvider(tokenResolver, extensionConfig)));
+  // Register providers
+  const jsonSelector: vscode.DocumentSelector = [
+    { language: "json", scheme: "file" },
+    { language: "jsonc", scheme: "file" },
+  ];
 
-	// Registering Completion Provider for the symbol "{"
-	context.subscriptions.push(vscode.languages.registerCompletionItemProvider(selector, new TokenCompletion(tokenResolver, extensionConfig), "{"));
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(jsonSelector, new JsonHoverProvider(resolver, store, config)),
+  );
 
-	// Command to open detailed view of token in WebView
-	context.subscriptions.push(
-		vscode.commands.registerCommand("jsonhintTs.viewTokenTooltip", async (params: { tokenKey: string }[]) => {
-			const tokenKey = params && params.length ? params[0].tokenKey : "";
-			if (!tokenKey) {
-				vscode.window.showWarningMessage("Token key not provided.");
-				return;
-			}
-			vscode.window.showInformationMessage(`viewTokenTooltip invoked with tokenKey: ${tokenKey}`);
-			TokenTooltipView.createOrShow(context.extensionUri, tokenKey, tokenResolver);
-		})
-	);
+  if (config.enableCssHover) {
+    context.subscriptions.push(
+      vscode.languages.registerHoverProvider(CSS_LANGUAGES, new CssHoverProvider(resolver, store, cssMapping, cssVarStore, config)),
+    );
+  }
 
-	// File watcher for JSON files with tokens
-	const tokensPath = path.join(vscode.workspace.workspaceFolders[0].uri.fsPath, "tokens");
-	const watcher = vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(tokensPath, "**/*.json"));
-	watcher.onDidChange(() => debounceReload());
-	watcher.onDidCreate(() => debounceReload());
-	watcher.onDidDelete(() => debounceReload());
-	context.subscriptions.push(watcher);
+  context.subscriptions.push(
+    vscode.languages.registerCompletionItemProvider(jsonSelector, new CompletionProvider(resolver, store, config), "{"),
+  );
 
-	// Monitoring changes in settings
-	context.subscriptions.push(
-		vscode.workspace.onDidChangeConfiguration((e) => {
-			if (e.affectsConfiguration("jsonhintTs")) {
-				vscode.window.showInformationMessage("jsonhintTs: Config updated. Please reload window (Ctrl+R)");
-			}
-		})
-	);
+  context.subscriptions.push(
+    vscode.languages.registerDefinitionProvider(
+      [...jsonSelector as vscode.DocumentFilter[], ...CSS_LANGUAGES as vscode.DocumentFilter[]],
+      new DefinitionProvider(store, cssMapping),
+    ),
+  );
 
-	// The "revealToken" command to navigate to the location of the token definition in the file
-	context.subscriptions.push(
-		vscode.commands.registerCommand("jsonhintTs.revealToken", async (params: { file: string; token: string }) => {
-			const { file, token } = params;
-			try {
-				const workspaceFolder = vscode.workspace.workspaceFolders![0].uri.fsPath;
+  // Commands
+  context.subscriptions.push(
+    vscode.commands.registerCommand("sxlResolver.forceRefresh", async () => {
+      statusBar.text = "$(sync~spin) SXL Resolver: refreshing...";
+      await loadTokens(workspaceRoot);
+      vscode.window.showInformationMessage(`SXL Resolver: Reloaded ${store.size} tokens + ${cssVarStore.size} CSS vars.`);
+    }),
+  );
 
-				// If the path is absolute, we use it, otherwise we supplement the path to the tokens
-				let fullFilePath = "";
-				if (path.isAbsolute(file)) {
-					fullFilePath = file;
-				} else {
-					fullFilePath = path.join(workspaceFolder, "tokens", file);
-				}
+  context.subscriptions.push(
+    vscode.commands.registerCommand("sxlResolver.revealToken", async (params: { file: string; token: string }) => {
+      await revealTokenInFile(params.file, params.token, workspaceRoot);
+    }),
+  );
 
-				const doc = await vscode.workspace.openTextDocument(fullFilePath);
-				const editor = await vscode.window.showTextDocument(doc);
+  // File watchers for token directories (JSON)
+  for (const dir of store.tokenDirs) {
+    const relPattern = path.relative(workspaceRoot, dir);
+    const watcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(workspaceRoot, `${relPattern}/**/*.json`),
+    );
+    watcher.onDidChange(() => debounceReload(workspaceRoot));
+    watcher.onDidCreate(() => debounceReload(workspaceRoot));
+    watcher.onDidDelete(() => debounceReload(workspaceRoot));
+    context.subscriptions.push(watcher);
+  }
 
-				// If token is empty, show start of file
-				if (!token) {
-					const position = new vscode.Position(0, 0);
-					editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
-					return;
-				}
+  // File watcher for CSS files
+  const cssWatcher = vscode.workspace.createFileSystemWatcher(
+    new vscode.RelativePattern(workspaceRoot, "**/*.{css,scss,less,sass}"),
+  );
+  cssWatcher.onDidChange(() => debounceReload(workspaceRoot));
+  cssWatcher.onDidCreate(() => debounceReload(workspaceRoot));
+  cssWatcher.onDidDelete(() => debounceReload(workspaceRoot));
+  context.subscriptions.push(cssWatcher);
 
-				const root = jsonc.parseTree(doc.getText());
-				if (!root) {
-					vscode.window.showWarningMessage("Failed to parse JSON");
-					return;
-				}
-
-				function findTokenNode(node: any, tokenParts: string[]): any {
-					if (!node) return null;
-					if (node.type === "object" && Array.isArray(node.children)) {
-						for (const prop of node.children) {
-							if (prop.type === "property" && prop.children && prop.children[0].value === tokenParts[0]) {
-								if (tokenParts.length === 1) return prop;
-								return findTokenNode(prop.children[1], tokenParts.slice(1));
-							}
-						}
-					}
-					return null;
-				}
-
-				const tokenParts = token.split(".");
-				const tokenNode = findTokenNode(root, tokenParts);
-				if (tokenNode) {
-					const keyNode = tokenNode.children[0];
-					const range = new vscode.Range(doc.positionAt(keyNode.offset), doc.positionAt(keyNode.offset + keyNode.length));
-					editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
-					editor.selection = new vscode.Selection(range.start, range.end);
-					const decorationType = vscode.window.createTextEditorDecorationType({
-						backgroundColor: new vscode.ThemeColor("editor.wordHighlightStrongBackground"),
-						borderRadius: "2px",
-					});
-					editor.setDecorations(decorationType, [range]);
-					setTimeout(() => decorationType.dispose(), 1500);
-				} else {
-					vscode.window.showWarningMessage(`Variable "${token}" not found in JSON`);
-				}
-			} catch (e: any) {
-				vscode.window.showErrorMessage(`Error moving to token: ${e.message}`);
-			}
-		})
-	);
+  // Config change
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration("sxlResolver")) {
+        config = readConfig();
+        store.configure(workspaceRoot, config);
+        vscode.window.showInformationMessage("SXL Resolver: Config updated. Reloading...");
+        loadTokens(workspaceRoot);
+      }
+    }),
+  );
 }
 
-function debounceReload(): void {
-	if (reloadTimer) clearTimeout(reloadTimer);
-	reloadTimer = setTimeout(() => {
-		reloadTokens();
-	}, 300);
+function readConfig(): ExtensionConfig {
+  const raw = vscode.workspace.getConfiguration("sxlResolver");
+  return getConfig(raw as unknown as Record<string, unknown>);
 }
 
-async function reloadTokens(): Promise<void> {
-	statusBarItem.text = "jsonhintTs: Reloading tokens...";
-	await vscode.window.withProgress({ location: vscode.ProgressLocation.Window, title: "jsonhintTs: Reloading tokens..." }, async () => {
-		await tokenResolver.loadTokens();
-	});
-	const tokenCount = Object.keys(tokenResolver.mapping).length;
-	vscode.window.setStatusBarMessage(`jsonhintTs: Reloaded ${tokenCount} tokens`, 2000);
-	statusBarItem.text = `$(zap) jsonhintTs: Loaded ${tokenCount} tokens`;
+async function loadTokens(workspaceRoot: string): Promise<void> {
+  await Promise.all([
+    store.load(),
+    cssVarStore.scanWorkspace(workspaceRoot),
+  ]);
+  resolver.clearCache();
+  cssMapping.rebuild(store.mapping, config.cssVariablePrefix);
+  statusBar.text = `$(zap) SXL: ${store.size} tokens · ${cssVarStore.size} vars`;
+}
+
+function debounceReload(workspaceRoot: string): void {
+  if (reloadTimer) clearTimeout(reloadTimer);
+  reloadTimer = setTimeout(() => loadTokens(workspaceRoot), 300);
+}
+
+async function revealTokenInFile(file: string, token: string, workspaceRoot: string): Promise<void> {
+  try {
+    let fullPath: string;
+    if (path.isAbsolute(file)) {
+      fullPath = file;
+    } else {
+      const absPath = store.getAbsolutePath(file);
+      fullPath = absPath ?? path.join(workspaceRoot, "tokens", file);
+    }
+
+    const doc = await vscode.workspace.openTextDocument(fullPath);
+    const editor = await vscode.window.showTextDocument(doc);
+
+    if (!token || token.startsWith("--")) {
+      editor.revealRange(new vscode.Range(0, 0, 0, 0), vscode.TextEditorRevealType.InCenter);
+      return;
+    }
+
+    const root = jsonc.parseTree(doc.getText());
+    if (!root) {
+      vscode.window.showWarningMessage("SXL Resolver: Failed to parse JSON.");
+      return;
+    }
+
+    const tokenNode = findTokenNode(root, token.split("."));
+    if (tokenNode?.children?.[0]) {
+      const keyNode = tokenNode.children[0];
+      const range = new vscode.Range(
+        doc.positionAt(keyNode.offset),
+        doc.positionAt(keyNode.offset + keyNode.length),
+      );
+      editor.revealRange(range, vscode.TextEditorRevealType.InCenter);
+      editor.selection = new vscode.Selection(range.start, range.end);
+
+      const decoration = vscode.window.createTextEditorDecorationType({
+        backgroundColor: new vscode.ThemeColor("editor.wordHighlightStrongBackground"),
+        borderRadius: "2px",
+      });
+      editor.setDecorations(decoration, [range]);
+      setTimeout(() => decoration.dispose(), 1500);
+    } else {
+      vscode.window.showWarningMessage(`SXL Resolver: Token "${token}" not found.`);
+    }
+  } catch (e) {
+    vscode.window.showErrorMessage(`SXL Resolver: ${(e as Error).message}`);
+  }
+}
+
+function findTokenNode(node: jsonc.Node, parts: string[]): jsonc.Node | null {
+  if (!node || parts.length === 0) return null;
+  if (node.type === "object" && node.children) {
+    for (const prop of node.children) {
+      if (prop.type === "property" && prop.children?.[0]?.value === parts[0]) {
+        if (parts.length === 1) return prop;
+        return findTokenNode(prop.children[1], parts.slice(1));
+      }
+    }
+  }
+  return null;
+}
+
+export function deactivate(): void {
+  // cleanup handled by disposables
 }
