@@ -56,7 +56,7 @@ export class TokenStore {
     }
   }
 
-  private async _parseFile(filePath: string, _baseDir: string): Promise<void> {
+  private async _parseFile(filePath: string, _: string): Promise<void> {
     try {
       const raw = await fs.readFile(filePath, "utf-8");
       const json = JSON.parse(raw) as Record<string, unknown>;

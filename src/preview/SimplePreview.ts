@@ -47,7 +47,6 @@ function renderTypoPropertyPreview(value: string, type: string): string {
   let fontFamily = "ui-sans-serif, system-ui, sans-serif";
   let fontWeight = "400";
   let textDecoration = "none";
-  let textTransform = "none";
 
   if (type === "fontFamily" || type === "fontFamilies") {
     fontFamily = `${safeVal}, ui-sans-serif, system-ui, sans-serif`;
@@ -55,8 +54,8 @@ function renderTypoPropertyPreview(value: string, type: string): string {
     fontWeight = value;
   } else if (type === "textCase") {
     const lower = value.toLowerCase();
-    if (lower === "uppercase") { textTransform = "uppercase"; sampleText = sampleText.toUpperCase(); }
-    else if (lower === "lowercase") { textTransform = "lowercase"; sampleText = sampleText.toLowerCase(); }
+    if (lower === "uppercase") { sampleText = sampleText.toUpperCase(); }
+    else if (lower === "lowercase") { sampleText = sampleText.toLowerCase(); }
     else if (lower === "capitalize") sampleText = "Aa Bb";
   } else if (type === "textDecoration") {
     textDecoration = value.toLowerCase();

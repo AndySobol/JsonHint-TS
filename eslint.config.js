@@ -12,5 +12,11 @@ module.exports = tseslint.config(
 		},
 		files: ["src/**/*.ts"],
 		ignores: ["dist/**", "node_modules/**", "**/*.js"],
+		rules: {
+			"@typescript-eslint/no-unused-vars": [
+				"error",
+				{ "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" },
+			],
+		},
 	}
 );

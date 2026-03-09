@@ -7,7 +7,7 @@ import type { ChainStep } from "../core/types";
 export function renderChain(
   chain: ChainStep[],
   maxLength: number,
-  _tokenDirs: string[],
+  _: string[],
 ): string {
   if (!chain.length) return "";
 

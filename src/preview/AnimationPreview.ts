@@ -95,7 +95,7 @@ function renderTransitionBadge(): string {
 
 function parseBezierValues(value: string): [number, number, number, number] | null {
   const str = typeof value === "string" ? value : JSON.stringify(value);
-  const match = str.match(/[\[(]?\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*[\])]?/);
+  const match = str.match(/[[(]?\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*[\])]?/);
   if (!match) return null;
 
   const nums = [parseFloat(match[1]), parseFloat(match[2]), parseFloat(match[3]), parseFloat(match[4])];

@@ -95,7 +95,7 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
   const m = l - c / 2;
-  let r = 0, g = 0, b = 0;
+  let r: number, g: number, b: number;
   if (h < 60)        { r = c; g = x; b = 0; }
   else if (h < 120)  { r = x; g = c; b = 0; }
   else if (h < 180)  { r = 0; g = c; b = x; }
@@ -125,7 +125,7 @@ export function hexToHsl(hex: string): string {
   if (max === min) return `hsl(0, 0%, ${(l * 100).toFixed(1)}%)`;
   const d = max - min;
   const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  let h = 0;
+  let h: number;
   if (max === r) h = ((g - b) / d + (g < b ? 6 : 0)) * 60;
   else if (max === g) h = ((b - r) / d + 2) * 60;
   else h = ((r - g) / d + 4) * 60;

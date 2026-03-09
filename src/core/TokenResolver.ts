@@ -5,7 +5,6 @@
 
 import type {
   TokenEntry,
-  TokenType,
   ChainStep,
   ResolvedToken,
   ResolvedSimple,
@@ -64,7 +63,7 @@ export class TokenResolver {
     entry: TokenEntry,
     chain: ChainStep[],
   ): ResolvedSimple {
-    let finalValue = this._computeValue(terminalKey, entry);
+    const finalValue = this._computeValue(terminalKey, entry);
 
     return {
       kind: "simple",
@@ -80,7 +79,7 @@ export class TokenResolver {
   private _resolveComposite(
     originalKey: string,
     entry: TokenEntry,
-    chain: ChainStep[],
+    _chain: ChainStep[],
   ): ResolvedComposite {
     const value = entry.value;
     const props: Record<string, ResolvedProperty> = {};

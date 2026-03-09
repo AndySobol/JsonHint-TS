@@ -4,7 +4,6 @@
  */
 
 import * as vscode from "vscode";
-import * as path from "path";
 import * as jsonc from "jsonc-parser";
 import type { TokenStore } from "../core/TokenStore";
 import type { CssMapping } from "../utils/cssMapping";
