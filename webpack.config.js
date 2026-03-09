@@ -1,8 +1,10 @@
+// @ts-check
 const path = require("path");
 
+/** @type {import('webpack').Configuration} */
 module.exports = {
-	mode: "production",
 	target: "node",
+	mode: "production",
 	entry: "./src/extension.ts",
 	output: {
 		path: path.resolve(__dirname, "dist"),
@@ -20,11 +22,7 @@ module.exports = {
 			{
 				test: /\.ts$/,
 				exclude: /node_modules/,
-				use: [
-					{
-						loader: "ts-loader",
-					},
-				],
+				use: "ts-loader",
 			},
 		],
 	},

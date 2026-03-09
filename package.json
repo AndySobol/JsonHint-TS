@@ -1,157 +1,111 @@
 {
-	"name": "jsonhint-ts",
-	"displayName": "jsonhint-ts",
-	"publisher": "andySobolev",
-	"license": "Proprietary",
-	"description": "Extension to display resolved token values from JSON with full resolution chain, compatible with Tokens Studio logic.",
-	"version": "1.0.3",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/AndySobolev/JsonHint-TS"
-	},
-	"bugs": {
-		"url": "https://github.com/AndySobolev/JsonHint-TS/issues"
-	},
-	"homepage": "https://github.com/AndySobolev/JsonHint-TS/blob/main/README.md",
-	"scripts": {
-		"build": "webpack",
-		"compile": "tsc -p .",
-		"build-all": "npm install && npm run build && vsce package",
-		"release": "npm run build-all && vsce publish"
-	},
-	"engines": {
-		"vscode": "^1.99.0"
-	},
-	"categories": [
-		"Visualization"
-	],
-	"icon": "icon.png",
-	"activationEvents": [
-		"onStartupFinished",
-		"onLanguage:json",
-		"onLanguage:jsonc"
-	],
-	"main": "./dist/extension.js",
-	"contributes": {
-		"configuration": {
-			"title": "jsonhint-ts",
-			"properties": {
-				"jsonhintTs.tooltipBackgroundColor": {
-					"type": "string",
-					"default": "#1e1e1e",
-					"description": "Background color for token tooltip view."
-				},
-				"jsonhintTs.tooltipTextColor": {
-					"type": "string",
-					"default": "#d4d4d4",
-					"description": "Text color for token tooltip view."
-				},
-				"jsonhintTs.tooltipFontSize": {
-					"type": "string",
-					"default": "14px",
-					"description": "Font size for token tooltip view."
-				},
-				"jsonhintTs.tooltipAnimationDuration": {
-					"type": "string",
-					"default": "0.3s",
-					"description": "Animation duration (fade-in) for token tooltip view."
-				},
-				"jsonhintTs.inheritanceStyle": {
-					"type": "string",
-					"enum": [
-						"compact",
-						"table"
-					],
-					"default": "compact",
-					"description": "How to display inheritance chain."
-				},
-				"jsonhintTs.showIcons": {
-					"type": "boolean",
-					"default": true,
-					"description": "Show icons for token types in hover."
-				},
-				"jsonhintTs.showArrows": {
-					"type": "boolean",
-					"default": true,
-					"description": "Show arrows between tokens in inheritance chain."
-				},
-				"jsonhintTs.complexTypes": {
-					"type": "array",
-					"default": [
-						"typography",
-						"boxShadow",
-						"composition"
-					],
-					"description": "List of token types treated as complex (rendered as tables)."
-				},
-				"jsonhintTs.noisyTokens": {
-					"type": "array",
-					"default": [
-						"core.ly.tab.base",
-						"cfg.scale.base.tab",
-						"cfg.scale.mult.tab"
-					],
-					"description": "List of tokens to exclude from the inheritance chain (noisy tokens)."
-				},
-				"jsonhintTs.maxChainLength": {
-					"type": "number",
-					"default": 5,
-					"description": "Maximum chain depth displayed in hover tooltips."
-				},
-				"jsonhintTs.maxSuggestions": {
-					"type": "number",
-					"default": 300,
-					"description": "Limit number of completion suggestions to avoid UI lag."
-				},
-				"jsonhintTs.allowNoDollar": {
-					"type": "boolean",
-					"default": true,
-					"description": "If true, the extension will recognize tokens defined without a leading '$'."
-				}
-			}
-		},
-		"commands": [
-			{
-				"command": "jsonhintTs.goToTokenDefinition",
-				"title": "Go to Token Definition"
-			},
-			{
-				"command": "jsonhintTs.viewTokenTooltip",
-				"title": "View Token Tooltip"
-			},
-			{
-				"command": "jsonhintTs.revealToken",
-				"title": "Reveal Token in File"
-			},
-			{
-				"command": "jsonhintTs.forceRefresh",
-				"title": "Force Refresh Tokens"
-			}
-		],
-		"languages": [
-			{
-				"id": "json",
-				"extensions": [
-					".json"
-				],
-				"aliases": [
-					"JSON"
-				]
-			}
-		]
-	},
-	"dependencies": {
-		"colorjs.io": "*",
-		"jsonc-parser": "^3.3.1",
-		"mathjs": "^12.4.3"
-	},
-	"devDependencies": {
-		"@types/node": "^22.14.0",
-		"@types/vscode": "^1.99.1",
-		"source-map-loader": "^5.0.0",
-		"ts-loader": "^9.5.2",
-		"typescript": "^4.9.5",
-		"webpack": "^5.98.0",
-		"webpack-cli": "^6.0.1"
-	}
+  "name": "sxl-resolver",
+  "displayName": "SXL Resolver",
+  "publisher": "andySobolev",
+  "license": "Proprietary",
+  "description": "Design token intellisense: resolved values, visual previews, inheritance chains. Works in JSON and CSS var().",
+  "version": "2.1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AndySobolev/JsonHint-TS"
+  },
+  "bugs": {
+    "url": "https://github.com/AndySobolev/JsonHint-TS/issues"
+  },
+  "homepage": "https://github.com/AndySobolev/JsonHint-TS/blob/main/README.md",
+  "scripts": {
+    "build": "webpack --mode production",
+    "watch": "webpack --mode development --watch",
+    "compile": "tsc --noEmit",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "build-all": "npm install && npm run compile && npm run build && npx @vscode/vsce package",
+    "release": "npm run build-all && npx @vscode/vsce publish"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "icon": "icon.png",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "SXL Resolver",
+      "properties": {
+        "sxlResolver.tokenPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "tokens"
+          ],
+          "description": "Paths to token folders (relative to workspace root). Multiple folders are merged."
+        },
+        "sxlResolver.showIcons": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show type icons in hover tooltips."
+        },
+        "sxlResolver.maxChainLength": {
+          "type": "number",
+          "default": 5,
+          "description": "Maximum chain depth displayed in hover tooltips."
+        },
+        "sxlResolver.maxSuggestions": {
+          "type": "number",
+          "default": 300,
+          "description": "Limit number of completion suggestions."
+        },
+        "sxlResolver.allowNoDollar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Recognize tokens defined without a leading '$' (e.g. 'value' instead of '$value')."
+        },
+        "sxlResolver.cssVariablePrefix": {
+          "type": "string",
+          "default": "--",
+          "description": "Prefix used for CSS variable reverse mapping (e.g. '--' for var(--token-name))."
+        },
+        "sxlResolver.enableCssHover": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable hover tooltips for var(--token-name) in CSS/SCSS/TSX files."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "sxlResolver.revealToken",
+        "title": "SXL Resolver: Reveal Token in File"
+      },
+      {
+        "command": "sxlResolver.forceRefresh",
+        "title": "SXL Resolver: Force Refresh Tokens"
+      }
+    ]
+  },
+  "dependencies": {
+    "jsonc-parser": "^3.3.1",
+    "mathjs": "^12.4.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.14.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.2.1",
+    "eslint": "^10.0.3",
+    "source-map-loader": "^5.0.0",
+    "ts-loader": "^9.5.2",
+    "typescript": "^5.5.0",
+    "typescript-eslint": "^8.56.1",
+    "webpack": "^5.98.0",
+    "webpack-cli": "^6.0.1"
+  }
 }

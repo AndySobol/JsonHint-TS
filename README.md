@@ -1,6 +1,6 @@
 ![Extension Icon](./icon.png)
 
-# JsonHint-TS
+# SXL Resolver
 
 VSCode Extension for working with [Tokens Studio](https://tokens.studio) JSON tokens directly in VSCode.
 
