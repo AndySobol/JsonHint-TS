@@ -23,7 +23,7 @@
     "test": "node --import tsx --test src/**/*.test.ts",
     "package:vsix": "npm run typecheck && npm run lint && npm run test && npm run build && npx @vscode/vsce package",
     "publish:vscode": "npm run package:vsix && npx @vscode/vsce publish",
-    "publish:openvsx": "npm run package:vsix && npx ovsx publish",
+    "publish:openvsx": "npm run package:vsix && node ./scripts/publish-openvsx.mjs",
     "release": "npm run publish:vscode",
     "release:all": "npm run publish:vscode && npm run publish:openvsx",
     "all-release": "npm run lint && npm run lint:fix && npm run typecheck && npm run test && npm run build && npm run publish:vscode && npm run publish:openvsx"
