@@ -4,7 +4,7 @@
   "publisher": "andySobolev",
   "license": "Proprietary",
   "description": "Design token intellisense: resolved values, visual previews, inheritance chains. Works in JSON and CSS var().",
-  "version": "2.1.0",
+  "version": "2.2.4",
   "repository": {
     "type": "git",
     "url": "https://github.com/AndySobolev/JsonHint-TS"
@@ -16,18 +16,37 @@
   "scripts": {
     "build": "webpack --mode production",
     "watch": "webpack --mode development --watch",
+    "typecheck": "tsc --noEmit",
     "compile": "tsc --noEmit",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix",
-    "build-all": "npm install && npm run compile && npm run build && npx @vscode/vsce package",
-    "release": "npm run build-all && npx @vscode/vsce publish"
+    "test": "node --import tsx --test src/**/*.test.ts",
+    "package:vsix": "npm run typecheck && npm run lint && npm run test && npm run build && npx @vscode/vsce package",
+    "publish:vscode": "npm run package:vsix && npx @vscode/vsce publish",
+    "publish:openvsx": "npm run package:vsix && npx ovsx publish",
+    "release": "npm run publish:vscode",
+    "release:all": "npm run publish:vscode && npm run publish:openvsx",
+    "all-release": "npm run lint && npm run lint:fix && npm run typecheck && npm run test && npm run build && npm run publish:vscode && npm run publish:openvsx"
   },
   "engines": {
     "vscode": "^1.85.0"
   },
   "categories": [
+    "Programming Languages",
     "Visualization",
     "Other"
+  ],
+  "keywords": [
+    "tokens",
+    "design-tokens",
+    "json",
+    "jsonc",
+    "css",
+    "scss",
+    "hover",
+    "intellisense",
+    "cursor",
+    "openvsx"
   ],
   "icon": "icon.png",
   "activationEvents": [
@@ -99,10 +118,11 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.14.0",
     "@types/vscode": "^1.85.0",
-    "@vscode/vsce": "^3.2.1",
+    "@vscode/vsce": "^3.9.1",
     "eslint": "^10.0.3",
     "source-map-loader": "^5.0.0",
     "ts-loader": "^9.5.2",
+    "tsx": "^4.20.3",
     "typescript": "^5.5.0",
     "typescript-eslint": "^8.56.1",
     "webpack": "^5.98.0",

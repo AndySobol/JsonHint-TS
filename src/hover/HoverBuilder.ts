@@ -42,10 +42,9 @@ export function buildHover(
 
   // ─── Value section ───
   if (resolved.kind === "simple") {
-    const valueLine = getValueLine(resolved);
-    content += `${valueLine}\n\n`;
+    content += renderSimpleValueSection(resolved);
   } else if (resolved.kind === "composite") {
-    content += renderCompositeProps(resolved);
+    content += renderCompositeValueSection(resolved);
   }
 
   // ─── Go to definition ───
@@ -75,8 +74,9 @@ function renderCompositeProps(
   const entries = Object.entries(resolved.props);
   if (!entries.length) return "";
 
+  const previewEntries = entries.slice(0, 14);
   let content = "";
-  for (const [prop, data] of entries) {
+  for (const [prop, data] of previewEntries) {
     const raw = data.rawValue;
     const val = data.resolvedValue;
     if (raw !== val && raw.includes("{")) {
@@ -85,6 +85,59 @@ function renderCompositeProps(
       content += `\`${prop}\` &nbsp; **\`${val}\`**\n\n`;
     }
   }
+  if (entries.length > previewEntries.length) {
+    content += `… +${entries.length - previewEntries.length} more properties\n\n`;
+  }
 
   return content;
+}
+
+function renderSimpleValueSection(resolved: Extract<ResolvedToken, { kind: "simple" }>): string {
+  const valueLine = getValueLine(resolved);
+  const hasRawAlias = resolved.rawValue !== resolved.finalValue;
+  if (!hasRawAlias) return `${valueLine}\n\n`;
+
+  return `Raw: \`${resolved.rawValue}\`\n\nResolved: ${valueLine}\n\n`;
+}
+
+function renderCompositeValueSection(resolved: Extract<ResolvedToken, { kind: "composite" }>): string {
+  const summary = renderCompositeSummaryLine(resolved);
+  let content = "";
+  if (summary) {
+    content += `${summary}\n\n`;
+  }
+  content += renderCompositeProps(resolved);
+  return content;
+}
+
+function renderCompositeSummaryLine(resolved: Extract<ResolvedToken, { kind: "composite" }>): string {
+  if (resolved.type === "typography") {
+    const fontFamily = resolved.props.fontFamily?.resolvedValue ?? "system-ui";
+    const fontWeight = resolved.props.fontWeight?.resolvedValue ?? "400";
+    const fontSize = resolved.props.fontSize?.resolvedValue ?? "16px";
+    const lineHeight = resolved.props.lineHeight?.resolvedValue ?? "normal";
+    const letterSpacing = resolved.props.letterSpacing?.resolvedValue;
+    const textDecoration = resolved.props.textDecoration?.resolvedValue;
+
+    const parts = [`font: ${fontWeight} ${fontSize}/${lineHeight} ${fontFamily};`];
+    if (letterSpacing) parts.push(`letter-spacing: ${letterSpacing};`);
+    if (textDecoration) parts.push(`text-decoration: ${textDecoration};`);
+    return "```css\n" + parts.join("\n") + "\n```";
+  }
+
+  if (resolved.type === "border") {
+    const width = resolved.props.width?.resolvedValue ?? resolved.props.borderWidth?.resolvedValue ?? "1px";
+    const style = resolved.props.style?.resolvedValue ?? "solid";
+    const color = resolved.props.color?.resolvedValue ?? "currentColor";
+    return "```css\n" + `border: ${width} ${style} ${color};` + "\n```";
+  }
+
+  if (resolved.type === "transition") {
+    const duration = resolved.props.duration?.resolvedValue ?? "200ms";
+    const timing = resolved.props.timingFunction?.resolvedValue ?? resolved.props.cubicBezier?.resolvedValue ?? "ease";
+    const property = resolved.props.property?.resolvedValue ?? "all";
+    return "```css\n" + `transition: ${property} ${duration} ${timing};` + "\n```";
+  }
+
+  return "";
 }

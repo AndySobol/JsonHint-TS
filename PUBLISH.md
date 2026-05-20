@@ -1,55 +1,72 @@
-# Публикация SXL Resolver
+# SXL Resolver — Publishing
 
-## 1. Опубликовать ветку (push в remote)
+This extension should be published to **both** registries:
 
-Сейчас есть незакоммиченные изменения. Чтобы отправить ветку:
+1. VS Code Marketplace (for VS Code users)
+2. Open VSX (for Cursor/OpenVSX users)
 
-```bash
-# Закоммитить изменения (если ещё не сделано)
-git add -A
-git commit -m "Refactor: new structure (core, providers, preview, hover)"
+Without Open VSX publish, Cursor search usually will not find the extension.
 
-# Отправить ветку rebase в origin
-git push origin rebase
-```
+## 1) Prerequisites
 
-Если ветка уже запушена и нужно обновить после коммита:
+### VS Code Marketplace
 
-```bash
-git push origin rebase
-```
-
----
-
-## 2. Опубликовать расширение в VS Code Marketplace
-
-### Подготовка
-
-1. **Пublisher**  
-   Зайти на [marketplace.visualstudio.com/manage](https://marketplace.visualstudio.com/manage) и создать publisher (если ещё нет). ID в `package.json` — `andySobolev`.
-
-2. **Personal Access Token (PAT)**  
-   - [Azure DevOps → Personal access tokens](https://dev.azure.com) → User settings → Personal access tokens  
-   - New Token → Custom defined → **Marketplace** → **Manage**  
-   - Сохранить токен (показывается один раз).
-
-### Публикация
+- Publisher exists: `andySobolev`
+- PAT with Marketplace publish permissions
+- Login:
 
 ```bash
-# Сборка и упаковка .vsix (уже есть скрипт)
-npm run build-all
-
-# Вход в Marketplace (подставит запрос PAT)
 npx @vscode/vsce login andySobolev
-
-# Публикация (minor/patch при необходимости править version в package.json)
-npx @vscode/vsce publish
 ```
 
-Или одной командой (сборка + публикация):
+### Open VSX
+
+- Open VSX account created
+- Publisher Agreement accepted
+- Access token created on open-vsx.org
+- Namespace created once:
 
 ```bash
-npm run release
+npx ovsx create-namespace andySobolev -p <OPENVSX_TOKEN>
 ```
 
-При первом запуске `vsce publish` потребуется ввести PAT.
+Then export token:
+
+```bash
+export OVSX_PAT=<OPENVSX_TOKEN>
+```
+
+## 2) Validate + package
+
+```bash
+npm run package:vsix
+```
+
+This runs: typecheck + lint + tests + production build + `.vsix` package.
+
+## 3) Publish
+
+### VS Code Marketplace
+
+```bash
+npm run publish:vscode
+```
+
+### Open VSX
+
+```bash
+npm run publish:openvsx
+```
+
+### Publish both
+
+```bash
+npm run release:all
+```
+
+## 4) If not visible in Cursor search
+
+1. Confirm extension exists on open-vsx.org with correct version.
+2. Wait for Cursor marketplace sync/cache.
+3. Install via VSIX in Cursor as fallback:
+   - `Extensions: Install from VSIX...`

@@ -38,13 +38,15 @@ export class CompletionProvider implements vscode.CompletionItemProvider {
     const items: vscode.CompletionItem[] = [];
     const tokenStart = new vscode.Position(position.line, braceIdx + 1);
     const tokenRange = new vscode.Range(tokenStart, position);
+    const contextPath = document.uri.fsPath;
 
-    for (const [key, entry] of this.store.mapping) {
+    for (const key of this.store.findByPrefix(prefix, contextPath)) {
       if (items.length >= this.config.maxSuggestions) break;
-      if (!key.startsWith(prefix)) continue;
+      const entry = this.store.getEntry(key, contextPath);
+      if (!entry) continue;
       if (nearestType && entry.type !== nearestType) continue;
 
-      const resolved = this.resolver.resolve(key);
+      const resolved = this.resolver.resolve(key, contextPath);
       const item = new vscode.CompletionItem(key, vscode.CompletionItemKind.Value);
       item.insertText = new vscode.SnippetString(`${key}}`);
       item.range = tokenRange;

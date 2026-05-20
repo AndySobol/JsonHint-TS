@@ -83,6 +83,7 @@ export interface ResolvedSimple {
   kind: "simple";
   type: TokenType;
   tokenKey: string;
+  rawValue: string;
   finalValue: string;
   chain: ChainStep[];
   file: string;
@@ -120,13 +121,30 @@ export interface ExtensionConfig {
 }
 
 export function getConfig(raw: Record<string, unknown>): ExtensionConfig {
+  const tokenPathsRaw = raw["tokenPaths"];
+  const tokenPaths = Array.isArray(tokenPathsRaw)
+    ? tokenPathsRaw.filter((v): v is string => typeof v === "string" && v.trim().length > 0)
+    : ["tokens"];
+  const maxChainLengthRaw = raw["maxChainLength"];
+  const maxSuggestionsRaw = raw["maxSuggestions"];
+  const cssVariablePrefixRaw = raw["cssVariablePrefix"];
+
   return {
-    tokenPaths: (raw["tokenPaths"] as string[] | undefined) ?? ["tokens"],
+    tokenPaths: tokenPaths.length > 0 ? tokenPaths : ["tokens"],
     showIcons: (raw["showIcons"] as boolean | undefined) ?? true,
-    maxChainLength: (raw["maxChainLength"] as number | undefined) ?? 5,
-    maxSuggestions: (raw["maxSuggestions"] as number | undefined) ?? 300,
+    maxChainLength:
+      typeof maxChainLengthRaw === "number" && Number.isFinite(maxChainLengthRaw)
+        ? Math.max(1, Math.floor(maxChainLengthRaw))
+        : 5,
+    maxSuggestions:
+      typeof maxSuggestionsRaw === "number" && Number.isFinite(maxSuggestionsRaw)
+        ? Math.max(1, Math.floor(maxSuggestionsRaw))
+        : 300,
     allowNoDollar: (raw["allowNoDollar"] as boolean | undefined) ?? true,
-    cssVariablePrefix: (raw["cssVariablePrefix"] as string | undefined) ?? "--",
+    cssVariablePrefix:
+      typeof cssVariablePrefixRaw === "string" && cssVariablePrefixRaw.length > 0
+        ? cssVariablePrefixRaw
+        : "--",
     enableCssHover: (raw["enableCssHover"] as boolean | undefined) ?? true,
   };
 }

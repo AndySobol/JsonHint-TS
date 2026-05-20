@@ -7,7 +7,7 @@ import { renderColorPreview, colorValueLine } from "./ColorPreview";
 import { renderDimensionPreview, renderBorderRadiusPreview, renderOpacityPreview } from "./DimensionPreview";
 import { renderSimpleBadge } from "./SimplePreview";
 import { renderGradientPreview } from "./GradientPreview";
-import { renderTypographyPreview } from "./TypographyPreview";
+import { renderTypographyPreview, renderTypographyShorthandPreview } from "./TypographyPreview";
 import { renderShadowPreview } from "./ShadowPreview";
 import { renderBorderPreview } from "./BorderPreview";
 import { renderEffectsPreview } from "./EffectsPreview";
@@ -38,6 +38,9 @@ function renderSimpleTypePreview(type: TokenType, value: string): string {
 
     case "fill":
       return renderColorPreview(value) || renderGradientPreview(value);
+
+    case "typography":
+      return renderTypographyShorthandPreview(value) || renderSimpleBadge(value, type);
 
     case "dimension":
     case "sizing":

@@ -2,99 +2,74 @@
 
 # SXL Resolver
 
-VSCode Extension for working with [Tokens Studio](https://tokens.studio) JSON tokens directly in VSCode.
+Design token IntelliSense for JSON/JSONC and CSS/SCSS `var(...)`.
 
----
+## Features
 
-## ✨ Features
+- Hover preview for token references in JSON/JSONC: `{color.brand.primary}`
+- Hover preview for CSS variables: `var(--color-brand-primary)` (with fallback syntax support)
+- Raw and resolved values (`raw → resolved`) with alias chain
+- Typography shorthand preview in CSS (`font` token variables)
+- CSS-first resolution strategy: current file → nearby CSS files → workspace, then JSON mapping fallback
+- Context-aware token scope for JSON and CSS: nearest token root relative to the active file is used first
+- Completion for `$value` token references
+- Go to definition for JSON references and CSS variables
+- Color preview and resolved final value rendering
+- Multi-root workspace support
+- 35+ token types supported (color, typography, dimensions, shadows, effects, transitions, grid, composition, etc.)
 
-- 🎨 Shows resolved values in hover tooltips
-- 🟣 Displays full inheritance and resolution chain
-- 🔤 Supports complex types: **typography**, **composition**, **boxShadow**, **color**, **sizing**, **spacing**, **dimension** and others
-- 🪄 Auto-completion for `$value` fields
-- 🟡 Color preview inside hover and autocomplete
-- 🔄 Handles cycles and long chains safely
-- 🐇 Optimized for large token collections (5000+ tokens)
-- 💼 Full compatibility with Tokens Studio for Figma
-- 🔗 Direct token navigation: Click token links in hover tooltips to open the corresponding file and highlight the token.
+## Supported languages
 
----
+- JSON: `json`, `jsonc`
+- CSS family: `css`, `scss`, `less`, `sass`
+- UI/code files with `var(...)`: `typescript`, `typescriptreact`, `javascript`, `javascriptreact`, `vue`, `svelte`, `html`
 
-## 📸 Preview
+## Installation
 
-### Token Navigation
-When hovering over a token, clickable links are shown. Clicking on a token automatically opens the corresponding file and highlights the exact line where that token is defined. This feature is implemented with a concise function that leverages VS Code's API for opening documents, revealing ranges, and applying temporary highlights—streamlining your workflow and making token management more intuitive.
-![show-typography](./screenshots/navigation.gif)
+### VS Code
 
-### 🟣 Typography Details
-Shows fully resolved typography properties:
-![show-typography](./screenshots/show-typography2.png)
+Install from Visual Studio Marketplace by searching for `SXL Resolver`.
 
-### 🎨 Color Tooltip
-Instant color preview:
-![hint-color](./screenshots/hint-color.png)
+### Cursor
 
-### 📏 Sizing Tooltip
-Works with sizing tokens:
-![hint-size](./screenshots/hint-size.png)
+Cursor uses an OpenVSX-compatible marketplace.  
+To be discoverable in Cursor search, publish the same extension to Open VSX.
 
-### ✨ Typography Autocomplete
-Smart autocomplete with resolved tokens:
-![hint-typography](./screenshots/hint-typography.png)
+If search is delayed, install from VSIX:
 
-### ☁️ Box Shadow Source
-See how complex boxShadow compositions resolve:
-![show-box-shadow-source](./screenshots/show-box-shadow-source.png)
+1. Build/package `.vsix`
+2. Cursor → Command Palette → `Extensions: Install from VSIX...`
 
-### ☁️ Box Shadow Result
-Full visualization of box shadow chain:
-![show-box-shadow](./screenshots/show-box-shadow.png)
+## Extension settings
 
-### 🎨 Color Resolution
-Resolve color composition with full trace:
-![show-color](./screenshots/show-color.png)
+| Setting | Type | Default | Description |
+|---|---|---|---|
+| `sxlResolver.tokenPaths` | `string[]` | `["tokens"]` | Token folders relative to workspace root (or absolute paths). |
+| `sxlResolver.showIcons` | `boolean` | `true` | Show type icons in hover/completion. |
+| `sxlResolver.maxChainLength` | `number` | `5` | Max chain depth in hover. |
+| `sxlResolver.maxSuggestions` | `number` | `300` | Max completion suggestions. |
+| `sxlResolver.allowNoDollar` | `boolean` | `true` | Support `type/value/extensions` without `$` prefix. |
+| `sxlResolver.cssVariablePrefix` | `string` | `"--"` | Prefix for reverse CSS mapping fallback. |
+| `sxlResolver.enableCssHover` | `boolean` | `true` | Enable hover for `var(...)` in CSS and related languages. |
 
-### 🎨 Gradient Resolution
-Resolve gradient composition with full trace:
-![show-sizing](./screenshots/hint-gradient.png)
+## Commands
 
-### 🎨 Color Modifiers Resolution
-Resolve alpha, mix composition with full trace:
-![show-sizing](./screenshots/hint-alpha-color.png)
+- `SXL Resolver: Force Refresh Tokens`
+- `SXL Resolver: Reveal Token in File`
 
-### 📐 Dimension Tooltip
-See all dimensions calculated:
-![show-size](./screenshots/show-size.png)
+## Development
 
-### ➕ Sizing Chain
-Full resolution chain for sizing:
-![show-sizing](./screenshots/show-sizing.png)
+```bash
+npm install
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```
 
+## Release scripts
 
----
-
-## ⚙️ Extension Settings
-
-The extension supports the following settings, which you can configure in the VSCode settings:
-
-| Setting                               | Description                                                                                                        | Default                                                            |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
-| `jsonhintTs.tooltipBackgroundColor`   | Background color for the token tooltip view.                                                                       | `#1e1e1e`                                                          |
-| `jsonhintTs.tooltipTextColor`         | Text color for the token tooltip view.                                                                             | `#d4d4d4`                                                          |
-| `jsonhintTs.tooltipFontSize`          | Font size for the token tooltip text.                                                                              | `14px`                                                             |
-| `jsonhintTs.tooltipAnimationDuration` | Animation duration (fade-in) for displaying token tooltips.                                                        | `0.3s`                                                             |
-| `jsonhintTs.inheritanceStyle`         | Style for displaying the token inheritance chain:<br> • `compact` – concise,<br> • `table` – displayed as a table. | `compact`                                                          |
-| `jsonhintTs.showIcons`                | Flag that determines whether to show icons for token types in tooltips.                                            | `true`                                                             |
-| `jsonhintTs.showArrows`               | Flag to enable displaying arrows between tokens in the inheritance chain.                                          | `true`                                                             |
-| `jsonhintTs.complexTypes`             | Array of token types that use an extended display format (e.g., table).                                            | `["typography", "boxShadow", "composition"]`                       |
-| `jsonhintTs.noisyTokens`              | Array of tokens to exclude from the inheritance chain (noisy tokens).                                              | `["core.ly.tab.base", "cfg.scale.base.tab", "cfg.scale.mult.tab"]` |
-| `jsonhintTs.maxChainLength`           | Maximum depth (number of steps) of the inheritance chain shown in the tooltip.                                     | `5`                                                                |
-| `jsonhintTs.maxSuggestions`           | Maximum number of autocomplete suggestions to prevent UI lag.                                                      | `300`                                                              |
-| `jsonhintTs.allowNoDollar`            | If set to `true`, the extension will recognize tokens defined without a leading `$` symbol.                         | `true`                                                             |
-
----
-
-
-❤️ Credits
-Thanks to the Tokens Studio team and community.
-And also huge thanks to Gleb Rotachev ❤️.
+- `npm run package:vsix` – validate + build + package
+- `npm run publish:vscode` – publish to VS Code Marketplace
+- `npm run publish:openvsx` – publish to Open VSX (for Cursor discoverability)
+- `npm run release:all` – publish to both registries

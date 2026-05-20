@@ -1,7 +1,7 @@
 /**
  * CssHoverProvider — hover tooltips for var(--token-name) in CSS/SCSS/TSX/etc.
- * 1. Tries to reverse-map the CSS variable to a JSON design token
- * 2. Falls back to resolving native CSS custom properties from :root definitions
+ * 1. Resolves native CSS custom properties with local-file precedence
+ * 2. Falls back to reverse-mapped JSON design tokens only when CSS variable is not declared in CSS
  */
 
 import * as vscode from "vscode";
@@ -52,21 +52,24 @@ export class CssHoverProvider implements vscode.HoverProvider {
 
     const cssVarName = match[1];
 
-    // Strategy 1: JSON design token mapping
+    // Strategy 1: Native CSS custom property (current file -> nearby files -> workspace)
+    const cssResolved = this.cssVarStore.resolveToToken(cssVarName, {
+      documentPath: document.uri.fsPath,
+      line: position.line + 1,
+    });
+    if (cssResolved) {
+      const md = buildHover(cssResolved, this.config, this.store.tokenDirs);
+      return new vscode.Hover(md, range);
+    }
+
+    // Strategy 2: JSON design token mapping fallback
     const tokenKey = this.cssMapping.findToken(cssVarName);
     if (tokenKey) {
-      const resolved = this.resolver.resolve(tokenKey);
+      const resolved = this.resolver.resolve(tokenKey, document.uri.fsPath);
       if (resolved) {
         const md = buildHover(resolved, this.config, this.store.tokenDirs);
         return new vscode.Hover(md, range);
       }
-    }
-
-    // Strategy 2: Native CSS custom property from :root
-    const cssResolved = this.cssVarStore.resolveToToken(cssVarName);
-    if (cssResolved) {
-      const md = buildHover(cssResolved, this.config, this.store.tokenDirs);
-      return new vscode.Hover(md, range);
     }
 
     return null;

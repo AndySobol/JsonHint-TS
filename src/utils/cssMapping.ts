@@ -48,7 +48,7 @@ function tokenPathToKebab(tokenPath: string): string {
 }
 
 function extractVarName(syntax: string): string {
-  const match = syntax.match(/var\(\s*(--[\w-]+)\s*\)/);
+  const match = syntax.match(/var\(\s*(--[\w-]+)\s*(?:,\s*[^)]*)?\)/);
   if (match) return match[1];
   if (syntax.startsWith("--")) return syntax;
   return `--${tokenPathToKebab(syntax)}`;

@@ -23,7 +23,7 @@ export class JsonHoverProvider implements vscode.HoverProvider {
     if (!range) return null;
 
     const tokenRef = document.getText(range);
-    const resolved = this.resolver.resolve(tokenRef);
+    const resolved = this.resolver.resolve(tokenRef, document.uri.fsPath);
     if (!resolved) return null;
 
     const md = buildHover(resolved, this.config, this.store.tokenDirs);

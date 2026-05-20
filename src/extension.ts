@@ -26,15 +26,14 @@ let cssVarStore: CssVariableStore;
 let config: ExtensionConfig;
 let statusBar: vscode.StatusBarItem;
 let reloadTimer: ReturnType<typeof setTimeout> | undefined;
+let dynamicWatchers: vscode.Disposable[] = [];
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
-  const folders = vscode.workspace.workspaceFolders;
-  if (!folders?.length) {
-    vscode.window.showErrorMessage("SXL Resolver: No workspace folder found.");
+  const workspaceRoots = getWorkspaceRoots();
+  if (!workspaceRoots.length) {
+    vscode.window.showWarningMessage("SXL Resolver: No workspace folder found.");
     return;
   }
-
-  const workspaceRoot = folders[0].uri.fsPath;
 
   config = readConfig();
 
@@ -54,12 +53,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
 
   // Initialize core
   store = new TokenStore();
-  store.configure(workspaceRoot, config);
+  store.configure(workspaceRoots, config);
   resolver = new TokenResolver(store);
   cssMapping = new CssMapping();
   cssVarStore = new CssVariableStore();
 
-  await loadTokens(workspaceRoot);
+  await loadTokens(workspaceRoots);
+  context.subscriptions.push({
+    dispose: () => {
+      for (const disposable of dynamicWatchers) {
+        disposable.dispose();
+      }
+      dynamicWatchers = [];
+    },
+  });
 
   // Register providers
   const jsonSelector: vscode.DocumentSelector = [
@@ -84,57 +91,65 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     vscode.languages.registerDefinitionProvider(
       [...jsonSelector as vscode.DocumentFilter[], ...CSS_LANGUAGES as vscode.DocumentFilter[]],
-      new DefinitionProvider(store, cssMapping),
+      new DefinitionProvider(store, cssMapping, cssVarStore),
     ),
   );
 
   // Commands
   context.subscriptions.push(
     vscode.commands.registerCommand("sxlResolver.forceRefresh", async () => {
+      const roots = getWorkspaceRoots();
+      if (!roots.length) {
+        vscode.window.showWarningMessage("SXL Resolver: No workspace folder found.");
+        return;
+      }
+      store.configure(roots, config);
+      resetWatchers(roots);
       statusBar.text = "$(sync~spin) SXL Resolver: refreshing...";
-      await loadTokens(workspaceRoot);
+      await loadTokens(roots);
       vscode.window.showInformationMessage(`SXL Resolver: Reloaded ${store.size} tokens + ${cssVarStore.size} CSS vars.`);
     }),
   );
 
   context.subscriptions.push(
     vscode.commands.registerCommand("sxlResolver.revealToken", async (params: { file: string; token: string }) => {
-      await revealTokenInFile(params.file, params.token, workspaceRoot);
+      await revealTokenInFile(params.file, params.token, getWorkspaceRoots());
     }),
   );
 
-  // File watchers for token directories (JSON)
-  for (const dir of store.tokenDirs) {
-    const relPattern = path.relative(workspaceRoot, dir);
-    const watcher = vscode.workspace.createFileSystemWatcher(
-      new vscode.RelativePattern(workspaceRoot, `${relPattern}/**/*.json`),
-    );
-    watcher.onDidChange(() => debounceReload(workspaceRoot));
-    watcher.onDidCreate(() => debounceReload(workspaceRoot));
-    watcher.onDidDelete(() => debounceReload(workspaceRoot));
-    context.subscriptions.push(watcher);
-  }
-
-  // File watcher for CSS files
-  const cssWatcher = vscode.workspace.createFileSystemWatcher(
-    new vscode.RelativePattern(workspaceRoot, "**/*.{css,scss,less,sass}"),
-  );
-  cssWatcher.onDidChange(() => debounceReload(workspaceRoot));
-  cssWatcher.onDidCreate(() => debounceReload(workspaceRoot));
-  cssWatcher.onDidDelete(() => debounceReload(workspaceRoot));
-  context.subscriptions.push(cssWatcher);
+  resetWatchers(workspaceRoots);
 
   // Config change
   context.subscriptions.push(
-    vscode.workspace.onDidChangeConfiguration((e) => {
+    vscode.workspace.onDidChangeConfiguration(async (e) => {
       if (e.affectsConfiguration("sxlResolver")) {
+        const roots = getWorkspaceRoots();
+        if (!roots.length) return;
         config = readConfig();
-        store.configure(workspaceRoot, config);
-        vscode.window.showInformationMessage("SXL Resolver: Config updated. Reloading...");
-        loadTokens(workspaceRoot);
+        store.configure(roots, config);
+        resetWatchers(roots);
+        await loadTokens(roots);
       }
     }),
   );
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeWorkspaceFolders(async () => {
+      const roots = getWorkspaceRoots();
+      if (!roots.length) {
+        statusBar.text = "$(warning) SXL Resolver: no workspace";
+        return;
+      }
+      store.configure(roots, config);
+      resetWatchers(roots);
+      await loadTokens(roots);
+    }),
+  );
+}
+
+function getWorkspaceRoots(): string[] {
+  const folders = vscode.workspace.workspaceFolders ?? [];
+  return folders.map((f) => f.uri.fsPath);
 }
 
 function readConfig(): ExtensionConfig {
@@ -142,29 +157,75 @@ function readConfig(): ExtensionConfig {
   return getConfig(raw as unknown as Record<string, unknown>);
 }
 
-async function loadTokens(workspaceRoot: string): Promise<void> {
-  await Promise.all([
-    store.load(),
-    cssVarStore.scanWorkspace(workspaceRoot),
-  ]);
-  resolver.clearCache();
-  cssMapping.rebuild(store.mapping, config.cssVariablePrefix);
-  statusBar.text = `$(zap) SXL: ${store.size} tokens · ${cssVarStore.size} vars`;
+async function loadTokens(workspaceRoots: string[]): Promise<void> {
+  try {
+    await Promise.all([
+      store.load(),
+      cssVarStore.scanWorkspaces(workspaceRoots),
+    ]);
+    resolver.clearCache();
+    cssMapping.rebuild(store.mapping, config.cssVariablePrefix);
+    statusBar.text = `$(zap) SXL: ${store.size} tokens · ${cssVarStore.size} vars`;
+  } catch (error) {
+    statusBar.text = "$(warning) SXL Resolver: load failed";
+    const message = error instanceof Error ? error.message : String(error);
+    vscode.window.showErrorMessage(`SXL Resolver: ${message}`);
+  }
 }
 
-function debounceReload(workspaceRoot: string): void {
+function debounceReload(workspaceRoots: string[]): void {
   if (reloadTimer) clearTimeout(reloadTimer);
-  reloadTimer = setTimeout(() => loadTokens(workspaceRoot), 300);
+  reloadTimer = setTimeout(() => {
+    void loadTokens(workspaceRoots);
+  }, 300);
 }
 
-async function revealTokenInFile(file: string, token: string, workspaceRoot: string): Promise<void> {
+function resetWatchers(workspaceRoots: string[]): void {
+  for (const disposable of dynamicWatchers) {
+    disposable.dispose();
+  }
+  dynamicWatchers = [];
+
+  const roots = workspaceRoots.length > 0 ? workspaceRoots : getWorkspaceRoots();
+  if (!roots.length) return;
+
+  for (const dir of store.tokenDirs) {
+    const watcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(vscode.Uri.file(dir), "**/*.{json,jsonc}"),
+    );
+    watcher.onDidChange(() => debounceReload(getWorkspaceRoots()));
+    watcher.onDidCreate(() => debounceReload(getWorkspaceRoots()));
+    watcher.onDidDelete(() => debounceReload(getWorkspaceRoots()));
+    dynamicWatchers.push(watcher);
+  }
+
+  for (const root of roots) {
+    const cssWatcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(vscode.Uri.file(root), "**/*.{css,scss,less,sass}"),
+    );
+    cssWatcher.onDidChange(() => debounceReload(getWorkspaceRoots()));
+    cssWatcher.onDidCreate(() => debounceReload(getWorkspaceRoots()));
+    cssWatcher.onDidDelete(() => debounceReload(getWorkspaceRoots()));
+    dynamicWatchers.push(cssWatcher);
+  }
+
+}
+
+async function revealTokenInFile(file: string, token: string, workspaceRoots: string[]): Promise<void> {
   try {
     let fullPath: string;
     if (path.isAbsolute(file)) {
       fullPath = file;
     } else {
       const absPath = store.getAbsolutePath(file);
-      fullPath = absPath ?? path.join(workspaceRoot, "tokens", file);
+      if (absPath) {
+        fullPath = absPath;
+      } else if (workspaceRoots[0]) {
+        fullPath = path.join(workspaceRoots[0], "tokens", file);
+      } else {
+        vscode.window.showWarningMessage("SXL Resolver: No workspace folder available for relative token path.");
+        return;
+      }
     }
 
     const doc = await vscode.workspace.openTextDocument(fullPath);

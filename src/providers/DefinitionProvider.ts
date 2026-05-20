@@ -7,21 +7,36 @@ import * as vscode from "vscode";
 import * as jsonc from "jsonc-parser";
 import type { TokenStore } from "../core/TokenStore";
 import type { CssMapping } from "../utils/cssMapping";
+import type { CssVariableStore } from "../utils/cssVariableStore";
 
 export class DefinitionProvider implements vscode.DefinitionProvider {
   constructor(
     private store: TokenStore,
     private cssMapping: CssMapping,
+    private cssVarStore: CssVariableStore,
   ) {}
 
   async provideDefinition(
     document: vscode.TextDocument,
     position: vscode.Position,
   ): Promise<vscode.Location | null> {
+    const cssVarName = this.extractCssVarName(document, position);
+    if (cssVarName) {
+      const cssVarEntry = this.cssVarStore.findVar(cssVarName, {
+        documentPath: document.uri.fsPath,
+        line: position.line + 1,
+      });
+      if (cssVarEntry) {
+        const targetUri = vscode.Uri.file(cssVarEntry.file);
+        const targetPos = new vscode.Position(Math.max(0, cssVarEntry.line - 1), 0);
+        return new vscode.Location(targetUri, targetPos);
+      }
+    }
+
     const tokenKey = this.extractTokenKey(document, position);
     if (!tokenKey) return null;
 
-    const entry = this.store.mapping.get(tokenKey);
+    const entry = this.store.getEntry(tokenKey, document.uri.fsPath);
     if (!entry) return null;
 
     const absPath = this.store.getAbsolutePath(entry.file);
@@ -54,16 +69,24 @@ export class DefinitionProvider implements vscode.DefinitionProvider {
     }
 
     // CSS: var(--token-name)
-    const cssRange = document.getWordRangeAtPosition(position, /var\(\s*--[\w-]+\s*\)/);
+    const cssRange = document.getWordRangeAtPosition(position, /var\(\s*--[\w-]+\s*(?:,\s*[^)]*)?\)/);
     if (cssRange) {
       const text = document.getText(cssRange);
-      const match = text.match(/var\(\s*(--[\w-]+)\s*\)/);
+      const match = text.match(/var\(\s*(--[\w-]+)\s*(?:,\s*[^)]*)?\)/);
       if (match) {
         return this.cssMapping.findToken(match[1]);
       }
     }
 
     return null;
+  }
+
+  private extractCssVarName(document: vscode.TextDocument, position: vscode.Position): string | null {
+    const cssRange = document.getWordRangeAtPosition(position, /var\(\s*--[\w-]+\s*(?:,\s*[^)]*)?\)/);
+    if (!cssRange) return null;
+    const text = document.getText(cssRange);
+    const match = text.match(/var\(\s*(--[\w-]+)\s*(?:,\s*[^)]*)?\)/);
+    return match?.[1] ?? null;
   }
 }
 
