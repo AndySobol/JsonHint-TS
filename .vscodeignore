@@ -4,3 +4,11 @@ node_modules/
 *.log
 *.vsix
 CHANGELOG.md
+PUBLISH.md
+scripts/
+src/
+eslint.config.js
+tsconfig.json
+webpack.config.js
+extension.js
+extension.js.map

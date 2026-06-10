@@ -3,8 +3,8 @@
   "displayName": "SXL Resolver",
   "publisher": "andySobolev",
   "license": "Proprietary",
-  "description": "Design token intellisense: resolved values, visual previews, inheritance chains. Works in JSON and CSS var().",
-  "version": "2.3.0",
+  "description": "Design token IntelliSense for JSON/JSONC and CSS var(): resolved values, previews, alias chains, completion, and source navigation.",
+  "version": "2.3.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/AndySobolev/JsonHint-TS"
@@ -12,7 +12,7 @@
   "bugs": {
     "url": "https://github.com/AndySobolev/JsonHint-TS/issues"
   },
-  "homepage": "https://github.com/AndySobolev/JsonHint-TS/blob/main/README.md",
+  "homepage": "https://sxl-studio.com/docs/util-resolver",
   "scripts": {
     "build": "webpack --mode production",
     "watch": "webpack --mode development --watch",
@@ -122,7 +122,7 @@
                   },
                   "package": {
                     "type": "string",
-                    "description": "Package name to resolve from the nearest workspace package.json, for example @ds/project-styles."
+                    "description": "Package name to resolve from the nearest workspace package.json, for example @org/design-system-styles."
                   },
                   "entrypoints": {
                     "type": "array",
@@ -154,7 +154,7 @@
                       "type": "string"
                     },
                     "default": [],
-                    "description": "Workspace-relative glob patterns for files that should use this source, for example packages/bk-client/**."
+                    "description": "Workspace-relative glob patterns for files that should use this source, for example apps/storefront/**."
                   }
                 }
               }

@@ -1,5 +1,13 @@
 # Change Log
 
+## [2.3.1] - 2026-06-11
+
+### Improved
+- Reworked the marketplace README for end users: installation, JSON token setup, CSS variable setup, settings reference, troubleshooting, and privacy.
+- Replaced project-specific examples with generic design-system examples.
+- Excluded internal publishing and source files from the packaged VSIX.
+- Documented Open VSX namespace verification requirements for maintainers.
+
 ## [2.3.0] - 2026-06-10
 
 ### Added

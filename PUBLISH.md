@@ -24,7 +24,12 @@ npx @vscode/vsce login andySobolev
 - Open VSX account created
 - Publisher Agreement accepted
 - Access token created on open-vsx.org
-- Namespace created once:
+- Namespace `andySobolev` is verified and has an owner
+- Publishing account is a member of the `andySobolev` namespace
+
+If Open VSX shows an unverified namespace warning, fix namespace ownership before publishing the next release. Creating a namespace allows publishing, but it does not automatically make the namespace verified. Claim ownership through the Open VSX namespace process, then add the publishing account as Owner or Contributor in Open VSX settings.
+
+Namespace creation, if the namespace does not exist yet:
 
 ```bash
 npx ovsx create-namespace andySobolev -p <OPENVSX_TOKEN>
