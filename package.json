@@ -4,7 +4,7 @@
   "publisher": "andySobolev",
   "license": "Proprietary",
   "description": "Design token intellisense: resolved values, visual previews, inheritance chains. Works in JSON and CSS var().",
-  "version": "2.2.4",
+  "version": "2.3.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/AndySobolev/JsonHint-TS"
@@ -96,6 +96,70 @@
           "type": "boolean",
           "default": true,
           "description": "Enable hover tooltips for var(--token-name) in CSS/SCSS/TSX files."
+        },
+        "sxlResolver.enableCssCompletion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable autocomplete for CSS custom property names inside var(--token-name)."
+        },
+        "sxlResolver.cssVariableSources": {
+          "type": "array",
+          "default": [],
+          "description": "Additional CSS variable sources. Use this to index published token/style packages without scanning all node_modules.",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "description": "Workspace-relative or absolute CSS file/folder path."
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Human-readable source name shown in completion details."
+                  },
+                  "package": {
+                    "type": "string",
+                    "description": "Package name to resolve from the nearest workspace package.json, for example @ds/project-styles."
+                  },
+                  "entrypoints": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "default": [],
+                    "description": "CSS/SCSS/Less/Sass files or folders. Package sources resolve these paths relative to the package root and follow CSS @import files in order."
+                  },
+                  "paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "default": [],
+                    "description": "Alias for entrypoints. For non-package sources paths are relative to the workspace root or absolute."
+                  },
+                  "manifests": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "default": [],
+                    "description": "Optional SXL token manifest JSON files with cssVar/type/value/resolvedValue metadata for exact CSS token types."
+                  },
+                  "appliesTo": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "default": [],
+                    "description": "Workspace-relative glob patterns for files that should use this source, for example packages/bk-client/**."
+                  }
+                }
+              }
+            ]
+          }
         }
       }
     },

@@ -118,6 +118,16 @@ export interface ExtensionConfig {
   allowNoDollar: boolean;
   cssVariablePrefix: string;
   enableCssHover: boolean;
+  enableCssCompletion: boolean;
+  cssVariableSources: CssVariableSourceConfig[];
+}
+
+export interface CssVariableSourceConfig {
+  name: string;
+  packageName?: string;
+  cssPaths: string[];
+  manifests: string[];
+  appliesTo: string[];
 }
 
 export function getConfig(raw: Record<string, unknown>): ExtensionConfig {
@@ -146,5 +156,65 @@ export function getConfig(raw: Record<string, unknown>): ExtensionConfig {
         ? cssVariablePrefixRaw
         : "--",
     enableCssHover: (raw["enableCssHover"] as boolean | undefined) ?? true,
+    enableCssCompletion: (raw["enableCssCompletion"] as boolean | undefined) ?? true,
+    cssVariableSources: readCssVariableSources(raw["cssVariableSources"]),
   };
+}
+
+function readCssVariableSources(raw: unknown): CssVariableSourceConfig[] {
+  if (!Array.isArray(raw)) return [];
+
+  const sources: CssVariableSourceConfig[] = [];
+  for (const [index, item] of raw.entries()) {
+    const source = readCssVariableSource(item, index);
+    if (source) sources.push(source);
+  }
+  return sources;
+}
+
+function readCssVariableSource(raw: unknown, index: number): CssVariableSourceConfig | null {
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    return {
+      name: trimmed,
+      cssPaths: [trimmed],
+      manifests: [],
+      appliesTo: [],
+    };
+  }
+
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const record = raw as Record<string, unknown>;
+  const packageNameRaw = record["package"];
+  const packageName = typeof packageNameRaw === "string" && packageNameRaw.trim()
+    ? packageNameRaw.trim()
+    : undefined;
+  const paths = readStringArray(record["paths"]);
+  const entrypoints = readStringArray(record["entrypoints"]);
+  const cssPaths = [...paths, ...entrypoints];
+  const manifests = readStringArray(record["manifests"]);
+
+  if (!packageName && cssPaths.length === 0 && manifests.length === 0) return null;
+
+  const nameRaw = record["name"];
+  const name = typeof nameRaw === "string" && nameRaw.trim()
+    ? nameRaw.trim()
+    : packageName ?? `css-source-${index + 1}`;
+
+  return {
+    name,
+    packageName,
+    cssPaths,
+    manifests,
+    appliesTo: readStringArray(record["appliesTo"]),
+  };
+}
+
+function readStringArray(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
 }

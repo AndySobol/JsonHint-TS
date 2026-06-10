@@ -1,5 +1,18 @@
 # Change Log
 
+## [2.3.0] - 2026-06-10
+
+### Added
+- Added CSS custom property autocomplete inside `var(--...)`.
+- Added configurable `sxlResolver.cssVariableSources` for allowlisted package/workspace CSS sources.
+- Added package-aware CSS source resolution through the nearest workspace `package.json`, including pnpm symlink layouts.
+- Added optional SXL token manifest indexing for `cssVar`/`resolvedValue` metadata.
+
+### Improved
+- CSS variable resolution can now distinguish project-specific sources with `appliesTo` patterns, avoiding incorrect values when multiple projects define the same variable name.
+- CSS entrypoints now follow relative `@import` files in declaration order instead of requiring broad directory scans.
+- Published design-system packages can be indexed without enabling global `node_modules` scanning.
+
 ## [1.0.0] - 2025-04-08
 
 ### Rewrite in TypeScript:

@@ -17,6 +17,7 @@ import { CssVariableStore } from "./utils/cssVariableStore";
 import { JsonHoverProvider } from "./providers/JsonHoverProvider";
 import { CssHoverProvider, CSS_LANGUAGES } from "./providers/CssHoverProvider";
 import { CompletionProvider } from "./providers/CompletionProvider";
+import { CssCompletionProvider } from "./providers/CssCompletionProvider";
 import { DefinitionProvider } from "./providers/DefinitionProvider";
 
 let store: TokenStore;
@@ -78,14 +79,20 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.languages.registerHoverProvider(jsonSelector, new JsonHoverProvider(resolver, store, config)),
   );
 
-  if (config.enableCssHover) {
-    context.subscriptions.push(
-      vscode.languages.registerHoverProvider(CSS_LANGUAGES, new CssHoverProvider(resolver, store, cssMapping, cssVarStore, config)),
-    );
-  }
+  context.subscriptions.push(
+    vscode.languages.registerHoverProvider(CSS_LANGUAGES, new CssHoverProvider(resolver, store, cssMapping, cssVarStore, config)),
+  );
 
   context.subscriptions.push(
     vscode.languages.registerCompletionItemProvider(jsonSelector, new CompletionProvider(resolver, store, config), "{"),
+  );
+
+  context.subscriptions.push(
+    vscode.languages.registerCompletionItemProvider(
+      CSS_LANGUAGES,
+      new CssCompletionProvider(cssVarStore, config),
+      "-",
+    ),
   );
 
   context.subscriptions.push(
@@ -104,9 +111,9 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         return;
       }
       store.configure(roots, config);
-      resetWatchers(roots);
       statusBar.text = "$(sync~spin) SXL Resolver: refreshing...";
       await loadTokens(roots);
+      resetWatchers(roots);
       vscode.window.showInformationMessage(`SXL Resolver: Reloaded ${store.size} tokens + ${cssVarStore.size} CSS vars.`);
     }),
   );
@@ -125,10 +132,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       if (e.affectsConfiguration("sxlResolver")) {
         const roots = getWorkspaceRoots();
         if (!roots.length) return;
-        config = readConfig();
+        Object.assign(config, readConfig());
         store.configure(roots, config);
-        resetWatchers(roots);
         await loadTokens(roots);
+        resetWatchers(roots);
       }
     }),
   );
@@ -141,8 +148,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         return;
       }
       store.configure(roots, config);
-      resetWatchers(roots);
       await loadTokens(roots);
+      resetWatchers(roots);
     }),
   );
 }
@@ -161,7 +168,7 @@ async function loadTokens(workspaceRoots: string[]): Promise<void> {
   try {
     await Promise.all([
       store.load(),
-      cssVarStore.scanWorkspaces(workspaceRoots),
+      cssVarStore.scanWorkspaces(workspaceRoots, config.cssVariableSources),
     ]);
     resolver.clearCache();
     cssMapping.rebuild(store.mapping, config.cssVariablePrefix);
@@ -207,6 +214,17 @@ function resetWatchers(workspaceRoots: string[]): void {
     cssWatcher.onDidCreate(() => debounceReload(getWorkspaceRoots()));
     cssWatcher.onDidDelete(() => debounceReload(getWorkspaceRoots()));
     dynamicWatchers.push(cssWatcher);
+  }
+
+  for (const root of cssVarStore.watchRoots) {
+    if (roots.some((workspaceRoot) => path.resolve(workspaceRoot) === path.resolve(root))) continue;
+    const cssSourceWatcher = vscode.workspace.createFileSystemWatcher(
+      new vscode.RelativePattern(vscode.Uri.file(root), "**/*.{css,scss,less,sass,json}"),
+    );
+    cssSourceWatcher.onDidChange(() => debounceReload(getWorkspaceRoots()));
+    cssSourceWatcher.onDidCreate(() => debounceReload(getWorkspaceRoots()));
+    cssSourceWatcher.onDidDelete(() => debounceReload(getWorkspaceRoots()));
+    dynamicWatchers.push(cssSourceWatcher);
   }
 
 }

@@ -16,6 +16,8 @@ test("getConfig applies safe defaults for invalid values", () => {
   assert.equal(config.cssVariablePrefix, "--");
   assert.equal(config.allowNoDollar, true);
   assert.equal(config.enableCssHover, true);
+  assert.equal(config.enableCssCompletion, true);
+  assert.deepEqual(config.cssVariableSources, []);
 });
 
 test("getConfig normalizes numeric values and keeps valid inputs", () => {
@@ -27,6 +29,21 @@ test("getConfig normalizes numeric values and keeps valid inputs", () => {
     showIcons: false,
     allowNoDollar: false,
     enableCssHover: false,
+    enableCssCompletion: false,
+    cssVariableSources: [
+      "styles/tokens.css",
+      {
+        name: "project styles",
+        package: "@scope/project-styles",
+        entrypoints: ["bk-ui/index.css"],
+        paths: ["components/index.css"],
+        manifests: ["bk-ui/tokens-manifest.json"],
+        appliesTo: ["packages/site/**"],
+      },
+      {
+        package: "@scope/empty",
+      },
+    ],
   });
 
   assert.deepEqual(config.tokenPaths, ["tokens", "brand"]);
@@ -36,4 +53,27 @@ test("getConfig normalizes numeric values and keeps valid inputs", () => {
   assert.equal(config.showIcons, false);
   assert.equal(config.allowNoDollar, false);
   assert.equal(config.enableCssHover, false);
+  assert.equal(config.enableCssCompletion, false);
+  assert.deepEqual(config.cssVariableSources, [
+    {
+      name: "styles/tokens.css",
+      cssPaths: ["styles/tokens.css"],
+      manifests: [],
+      appliesTo: [],
+    },
+    {
+      name: "project styles",
+      packageName: "@scope/project-styles",
+      cssPaths: ["components/index.css", "bk-ui/index.css"],
+      manifests: ["bk-ui/tokens-manifest.json"],
+      appliesTo: ["packages/site/**"],
+    },
+    {
+      name: "@scope/empty",
+      packageName: "@scope/empty",
+      cssPaths: [],
+      manifests: [],
+      appliesTo: [],
+    },
+  ]);
 });
