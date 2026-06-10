@@ -39,6 +39,59 @@ test("CssVariableStore infers typography for font shorthand custom property", as
   assert.equal(resolved.finalValue.includes("16px/24px"), true);
 });
 
+test("CssVariableStore works without manifests and does not generate files", async () => {
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "sxl-css-no-manifest-"));
+  const cssPath = path.join(tempRoot, "styles", "index.css");
+  const contextFile = path.join(tempRoot, "src", "component.css");
+  await fs.mkdir(path.dirname(cssPath), { recursive: true });
+  await fs.mkdir(path.dirname(contextFile), { recursive: true });
+  await fs.writeFile(contextFile, ".component { color: var(--color-brand); }");
+  await fs.writeFile(cssPath, `
+    :root {
+      --color-brand: #3366ff;
+      --surface-gradient: linear-gradient(90deg, #3366ff 0%, #00d4ff 100%);
+      --font-title: 600 16px/24px Inter, system-ui, sans-serif;
+      --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.16);
+      --space-md: 8px;
+      --duration-fast: 120ms;
+      --alias-space: var(--space-md);
+    }
+  `);
+  const beforeFiles = await listRelativeFiles(tempRoot);
+
+  const store = new CssVariableStore();
+  await store.scanWorkspaces([tempRoot], [
+    {
+      name: "styles",
+      cssPaths: ["styles/index.css"],
+      manifests: [],
+      appliesTo: ["src/**"],
+    },
+  ]);
+
+  const afterFiles = await listRelativeFiles(tempRoot);
+  assert.deepEqual(afterFiles, beforeFiles);
+  assert.equal(await fileExists(path.join(tempRoot, "styles", "tokens-manifest.json")), false);
+
+  const color = store.resolveToToken("--color-brand", { documentPath: contextFile, line: 1 });
+  const gradient = store.resolveToToken("--surface-gradient", { documentPath: contextFile, line: 1 });
+  const typography = store.resolveToToken("--font-title", { documentPath: contextFile, line: 1 });
+  const shadow = store.resolveToToken("--shadow-card", { documentPath: contextFile, line: 1 });
+  const spacing = store.resolveToToken("--space-md", { documentPath: contextFile, line: 1 });
+  const duration = store.resolveToToken("--duration-fast", { documentPath: contextFile, line: 1 });
+  const alias = store.resolveToToken("--alias-space", { documentPath: contextFile, line: 1 });
+
+  assert.equal(color?.type, "color");
+  assert.equal(gradient?.type, "gradient");
+  assert.equal(typography?.type, "typography");
+  assert.equal(shadow?.type, "shadow");
+  assert.equal(spacing?.type, "dimension");
+  assert.equal(duration?.type, "duration");
+  assert.equal(alias?.type, "dimension");
+  assert.equal(alias?.kind, "simple");
+  assert.equal(alias?.finalValue, "8px");
+});
+
 test("CssVariableStore prioritizes local CSS variable definitions by document context", async () => {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "sxl-css-scope-"));
   const rootCss = path.join(tempRoot, "styles", "root.css");
@@ -218,6 +271,69 @@ test("CssVariableStore reads configured manifest sources as resolved-value fallb
   assert.equal(resolved.finalValue.toLowerCase(), "#fe5e01");
 });
 
+test("CssVariableStore reads manifest metadata for advanced token types", async () => {
+  const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "sxl-css-manifest-types-"));
+  const manifestPath = path.join(tempRoot, "tokens-manifest.json");
+  await fs.writeFile(manifestPath, JSON.stringify({
+    schemaVersion: "1.0",
+    tokens: [
+      {
+        cssVar: "--color-bg",
+        type: "color",
+        value: "{color.bg}",
+        resolvedValue: "#ffffff",
+      },
+      {
+        cssVar: "--gradient-brand",
+        type: "gradient",
+        value: "{gradient.brand}",
+        resolvedValue: "linear-gradient(90deg, #3366ff 0%, #00d4ff 100%)",
+      },
+      {
+        cssVar: "--typography-title",
+        type: "typography",
+        value: "{typography.title}",
+        resolvedValue: "600 16px/24px Inter, system-ui, sans-serif",
+      },
+      {
+        cssVar: "--effect-overlay",
+        type: "effects",
+        value: "{effects.overlay}",
+        resolvedValue: "blur(16px)",
+      },
+      {
+        cssVar: "--shadow-card",
+        type: "shadow",
+        value: "{shadow.card}",
+        resolvedValue: "0 8px 24px rgba(0, 0, 0, 0.16)",
+      },
+      {
+        cssVar: "--radius-md",
+        type: "borderRadius",
+        value: "{radius.md}",
+        resolvedValue: "8px",
+      },
+    ],
+  }));
+
+  const store = new CssVariableStore();
+  await store.scanWorkspaces([tempRoot], [
+    {
+      name: "manifest",
+      cssPaths: [],
+      manifests: ["tokens-manifest.json"],
+      appliesTo: [],
+    },
+  ]);
+
+  assert.equal(store.resolveToToken("--color-bg")?.type, "color");
+  assert.equal(store.resolveToToken("--gradient-brand")?.type, "gradient");
+  assert.equal(store.resolveToToken("--typography-title")?.type, "typography");
+  assert.equal(store.resolveToToken("--effect-overlay")?.type, "effects");
+  assert.equal(store.resolveToToken("--shadow-card")?.type, "shadow");
+  assert.equal(store.resolveToToken("--radius-md")?.type, "borderRadius");
+});
+
 test("CssVariableStore enriches CSS declarations with manifest token metadata", async () => {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "sxl-css-manifest-metadata-"));
   const cssPath = path.join(tempRoot, "styles", "index.css");
@@ -309,3 +425,31 @@ test("CssVariableStore prioritizes configured CSS sources over unrelated workspa
   assert.equal(resolved.finalValue.toLowerCase(), "#f2f5f8");
   assert.equal(resolved.file, sourceCss);
 });
+
+async function listRelativeFiles(root: string): Promise<string[]> {
+  const result: string[] = [];
+
+  async function walk(dir: string): Promise<void> {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const absolute = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(absolute);
+      } else if (entry.isFile()) {
+        result.push(path.relative(root, absolute).split(path.sep).join("/"));
+      }
+    }
+  }
+
+  await walk(root);
+  return result.sort();
+}
+
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}

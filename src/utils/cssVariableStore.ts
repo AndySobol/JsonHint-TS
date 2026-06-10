@@ -784,6 +784,11 @@ function inferType(value: string): TokenType {
 
   if (parseColor(trimmed)) return "color";
 
+  if (/^(linear|radial|conic)-gradient\(/.test(trimmed)) return "gradient";
+
+  if (/^\d+(\.\d+)?(px|rem|em)?\s+\d+(\.\d+)?(px|rem|em)?/.test(trimmed)
+    && /rgba?\(|#[0-9a-fA-F]/.test(trimmed)) return "shadow";
+
   if (looksLikeTypography(trimmed)) return "typography";
 
   if (/^-?\d+(\.\d+)?(px|rem|em|%|vw|vh|pt|cm|mm|in|ch|ex)$/.test(trimmed)) return "dimension";
@@ -791,11 +796,6 @@ function inferType(value: string): TokenType {
   if (/^-?\d+(\.\d+)?(ms|s)$/.test(trimmed)) return "duration";
 
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) return "number";
-
-  if (/^(linear|radial|conic)-gradient\(/.test(trimmed)) return "gradient";
-
-  if (/^\d+(\.\d+)?(px|rem|em)?\s+\d+(\.\d+)?(px|rem|em)?/.test(trimmed)
-    && /rgba?\(|#[0-9a-fA-F]/.test(trimmed)) return "shadow";
 
   return "text";
 }

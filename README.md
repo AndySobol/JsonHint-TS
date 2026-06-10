@@ -76,6 +76,13 @@ By default, SXL Resolver scans CSS/SCSS/Less/Sass files in the open workspace an
 
 Use `sxlResolver.cssVariableSources` when CSS variables are generated in another folder or shipped from a design-system package. This avoids slow global `node_modules` scans and prevents variables from unrelated products or themes from being mixed.
 
+CSS sources work in two modes:
+
+- Without a manifest: configure only CSS entrypoints or paths. Resolver reads CSS files, follows relative `@import` files, resolves `var(...)` chains, and infers broad types from CSS values. It does not generate `tokens-manifest.json` or any other files in the user's repository.
+- With a manifest: add `manifests` when the design-system package or generated workspace output includes token metadata. Use this when you need exact token types for CSS variables.
+
+To generate `tokens-manifest.json` yourself, use [@sxl-studio/token-transformer](https://www.npmjs.com/package/@sxl-studio/token-transformer?activeTab=readme) with a `platform: manifest` output. If a consumed design-system package already ships manifest files, application repositories only need to reference those files in `sxlResolver.cssVariableSources`; they do not need to run Transformer.
+
 Example for a published design-system package:
 
 ```json
@@ -94,6 +101,21 @@ Example for a published design-system package:
       "entrypoints": ["operations/index.css", "components/index.css"],
       "manifests": ["operations/tokens-manifest.json"],
       "appliesTo": ["apps/operations/**", "packages/operations-ui/**"]
+    }
+  ]
+}
+```
+
+Example without manifest metadata:
+
+```json
+{
+  "sxlResolver.cssVariableSources": [
+    {
+      "name": "Commerce app styles",
+      "package": "@org/design-system-styles",
+      "entrypoints": ["commerce/index.css", "components/index.css"],
+      "appliesTo": ["apps/storefront/**", "packages/storefront-ui/**"]
     }
   ]
 }
@@ -155,7 +177,7 @@ Preferences: Open User Settings (JSON)
 | `package` | Package name resolved from the nearest workspace package context. Works with pnpm, npm, and yarn layouts. |
 | `entrypoints` | CSS files or folders inside the package to index. Relative CSS `@import` files are followed in order. |
 | `paths` | Alias for `entrypoints`. Without `package`, paths are workspace-relative or absolute. |
-| `manifests` | Optional SXL manifest files with `cssVar`, `type`, `value`, and `resolvedValue` metadata. Use this for exact CSS token types. |
+| `manifests` | Optional SXL manifest files with `cssVar`, `type`, `value`, and `resolvedValue` metadata. Resolver reads them for exact CSS token types and never generates them. |
 | `appliesTo` | Workspace-relative glob patterns that decide which files use this source group. |
 
 ## Resolution Priority
@@ -171,17 +193,46 @@ If two apps or themes define the same CSS variable name, split them into separat
 
 ## Manifest Metadata
 
-Plain CSS custom properties do not contain token type metadata. Without a manifest, Resolver can infer only broad types from values.
+`tokens-manifest.json` is optional.
 
-Connect `tokens-manifest.json` when you need exact CSS token types such as:
+Without a manifest, Resolver still works with CSS variables and does not create files. It reads configured CSS files and infers broad types:
 
+- `color`
+- `gradient`
+- `typography` for CSS font shorthand-like values
+- `dimension`
+- `duration`
+- `number`
+- `shadow`
+- `text` fallback
+
+Use manifest metadata when CSS values are ambiguous or when you need the original JSON token type. For example, `8px` can be `spacing`, `sizing`, `fontSize`, `borderRadius`, or `borderWidth`; CSS alone cannot distinguish those safely.
+
+Manifest metadata can preserve any Resolver token type emitted by your token pipeline, including:
+
+- `color`
+- `gradient`
+- `typography`
+- `fontFamily`
+- `fontWeight`
+- `fontSize`
+- `lineHeight`
+- `letterSpacing`
 - `spacing`
 - `sizing`
 - `borderRadius`
-- `fontWeight`
-- `lineHeight`
+- `borderWidth`
 - `opacity`
 - `shadow`
+- `boxShadow`
+- `blur`
+- `effects`
+- `grid`
+- `transition`
+- `duration`
+- `composition`
+
+Composite JSON tokens exported as CSS are shown as their CSS value. Use JSON token files when you need the full composite object breakdown.
 
 ## Commands
 

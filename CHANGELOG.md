@@ -1,5 +1,16 @@
 # Change Log
 
+## [2.3.2] - 2026-06-11
+
+### Fixed
+- Improved CSS type inference so box-shadow-like values are classified as `shadow` instead of `typography`.
+
+### Improved
+- Clarified that CSS variable resolution works with or without `tokens-manifest.json`.
+- Documented that Resolver reads manifests but never generates files in user repositories.
+- Added guidance for generating manifest metadata with `@sxl-studio/token-transformer`.
+- Added regression tests for no-manifest CSS mode and advanced manifest token types.
+
 ## [2.3.1] - 2026-06-11
 
 ### Improved

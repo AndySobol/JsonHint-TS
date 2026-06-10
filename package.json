@@ -4,7 +4,7 @@
   "publisher": "andySobolev",
   "license": "Proprietary",
   "description": "Design token IntelliSense for JSON/JSONC and CSS var(): resolved values, previews, alias chains, completion, and source navigation.",
-  "version": "2.3.1",
+  "version": "2.3.2",
   "repository": {
     "type": "git",
     "url": "https://github.com/AndySobolev/JsonHint-TS"
