@@ -4,13 +4,13 @@
   "publisher": "andySobolev",
   "license": "Proprietary",
   "description": "Design token IntelliSense for JSON/JSONC and CSS var(): resolved values, previews, alias chains, completion, and source navigation.",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AndySobolev/JsonHint-TS"
+    "url": "https://github.com/AndySobol/JsonHint-TS"
   },
   "bugs": {
-    "url": "https://github.com/AndySobolev/JsonHint-TS/issues"
+    "url": "https://github.com/AndySobol/JsonHint-TS/issues"
   },
   "homepage": "https://sxl-studio.com/docs/util-resolver",
   "scripts": {

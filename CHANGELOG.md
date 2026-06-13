@@ -1,5 +1,10 @@
 # Change Log
 
+## [2.3.3] - 2026-06-13
+
+### Fixed
+- Corrected Marketplace repository and issue tracker links to the active GitHub repository.
+
 ## [2.3.2] - 2026-06-11
 
 ### Fixed
